@@ -2,8 +2,9 @@ image: registry.csc.sibsutis.ru/ci/git-clang-format:latest
 stages:
   - check-format
   - build
+  - run
   - test
-
+  
 check-format:
   stage: check-format
   script:
@@ -14,4 +15,8 @@ build:
   stage: build
   script:
     - make
+
+run:
+  stage: run
+  script:
     - make run
