@@ -4,5 +4,4 @@
 int main(void)
 {
     sc_init();
-    
 }

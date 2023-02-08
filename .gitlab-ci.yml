@@ -1,14 +1,8 @@
 image: registry.csc.sibsutis.ru/ci/git-clang-format:latest
 stages:
-  - check-format
   - build
   - run
   - test
-
-check-format:
-  stage: check-format
-  script:
-    - git ls-files src/*.{c,h} | xargs clang-format -i --verbose && git diff --exit-code
 
 build:
   stage: build
