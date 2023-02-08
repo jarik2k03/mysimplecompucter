@@ -1,0 +1,6 @@
+*.log
+*.a
+*.d
+*.o
+bin/main
+bin/test
