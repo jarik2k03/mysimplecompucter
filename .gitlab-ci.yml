@@ -1,15 +1,15 @@
 image: registry.csc.sibsutis.ru/ci/git-clang-format:latest
+
 stages:
   - build
-  - run
   - test
 
 build:
   stage: build
   script:
-    - make
+    - make && make run
 
-run:
-  stage: run
+test:
+  stage: test
   script:
-    - make run
+    - make test && make run_test

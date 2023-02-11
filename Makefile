@@ -3,7 +3,7 @@ LIB_NAME = computer
 TEST_NAME = test
 DEBUG = -g3 -O0
 
-CFLAGS = -Wall -Wextra -Werror
+CFLAGS = -Wall -Wextra -Werror -Wcomments -Wdeprecated -Wformat-extra-args -Wno-pragmas -Wstrict-overflow=5 -Wpedantic
 CPPFLAGS = -I src -MP -MMD
 
 BIN_DIR = bin
