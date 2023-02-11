@@ -13,7 +13,7 @@ CTEST(memory, init)
 CTEST(memory, get)
 {
     int val = 24;
-    
+
     int expCode = SUCCESS;
     int curCode = sc_memoryGet(50, &val);
     ASSERT_EQUAL(expCode, curCode);
@@ -21,7 +21,6 @@ CTEST(memory, get)
     expCode = FAIL;
     curCode = sc_memoryGet(110, &val); // попыткаобращения
     ASSERT_EQUAL(expCode, curCode);
-
 }
 
 CTEST(reg, get)
@@ -50,7 +49,7 @@ CTEST(command, encode)
     int expCode = SUCCESS;
     int curCode = sc_commandEncode(command, operand, &value);
     ASSERT_EQUAL(expCode, curCode);
-    ASSERT_EQUAL(expValue, value); // закодированная команда.  
+    ASSERT_EQUAL(expValue, value); // закодированная команда.
 
     command = 27;
     expCode = FAIL;
@@ -80,5 +79,4 @@ CTEST(command, decode)
     expCode = FAIL;
     curCode = sc_commandDecode(value, NULL, &operand); // защита от "дурака".
     ASSERT_EQUAL(expCode, curCode);
-
 }

@@ -1,21 +1,55 @@
 #include "computer.h"
 
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <inttypes.h>
 #define RAM 100
 #define NULLBIT 0x0
 #define BIT 0x1
 #define MASK 0x7f
 
-
 static int* memory = NULL;
 static int registr; // переменная, хранящая флаги
 
 static int commandSet[] = {
-        10, 11, 20, 21, 30, 31, 32, 33, 40, 41, 42, 43, 51,
-        52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64,
-        65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76,
+    10,
+    11,
+    20,
+    21,
+    30,
+    31,
+    32,
+    33,
+    40,
+    41,
+    42,
+    43,
+    51,
+    52,
+    53,
+    54,
+    55,
+    56,
+    57,
+    58,
+    59,
+    60,
+    61,
+    62,
+    63,
+    64,
+    65,
+    66,
+    67,
+    68,
+    69,
+    70,
+    71,
+    72,
+    73,
+    74,
+    75,
+    76,
 };
 
 int sc_init()
@@ -108,12 +142,12 @@ int sc_regSet(int reg, int value) //reg - номер разряда
         return -1;
     if (value != 0 && value != 1)
         return -1;
-    
+
     if (value == 1)
         registr |= (1 << (reg - 1)); // задвигаем единичку на нужную позицию и записываем в регистр
     else
         registr &= (~(1 << (reg - 1))); // задвигаем единичку на нужную позицию и записываем в регистр
-    
+
     return 0;
 }
 
@@ -163,9 +197,7 @@ int sc_commandDecode(int value, int* command, int* operand)
     value >>= 7;
     *command = value;
     return 0;
-
 }
-
 
 int compare(const void* n1, const void* n2)
 {
@@ -176,5 +208,4 @@ void sc_memoryRand()
 {
     for (uint8_t i = 0; i < 50; i++)
         sc_memorySet(rand() % 100, rand() % 40);
-    
 }

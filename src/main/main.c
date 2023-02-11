@@ -6,7 +6,7 @@ int main(void)
     int command = 41, operand = 127;
     int value = 0;
     sc_init();
-    
+
     //sc_memoryRand();
     sc_memoryLoad("load.bin");
     // sc_memorySave("save.bin");
