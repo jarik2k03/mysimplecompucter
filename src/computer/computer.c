@@ -97,7 +97,7 @@ int sc_regGet(int reg, int* value) //reg - номер разряда
         return -1;
 
     *value = (registr >> (reg - 1)) & BIT;
-    printf("%d", registr >> (reg - 1));
+    //printf("%d", registr >> (reg - 1));
 
     return 0;
 }
