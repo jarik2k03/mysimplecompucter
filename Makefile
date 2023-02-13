@@ -33,7 +33,7 @@ $(APP_NAME): $(APP_PATH)
 -include $(DEPS)
 
 $(APP_PATH): $(APP_OBJECTS) $(LIB_PATH)
-	$(CC) $(CFLAGS) $(DEBUG) $(CPPFLAGS) -o $@ $^ -lm
+	$(CC) $(CFLAGS) $(DEBUG) $(CPPFLAGS) -o $@ $^ -lm -lcomputer -Lobj/src/computer
 
 $(LIB_PATH): $(LIB_OBJECTS)
 	ar rcs $@ $^
