@@ -1,11 +1,11 @@
 APP_NAME = main
-LIB_NAME = computer
+LIB_NAME = term
 TEST_NAME = test
 DEBUG = -g3 -O0
 
 CFLAGS = -Wall -Wextra -Werror -Wcomments -Wdeprecated -Wformat-extra-args -Wno-pragmas -Wstrict-overflow=5 -Wpedantic
 CPPFLAGS = -I src -MP -MMD
-
+CC = gcc
 BIN_DIR = bin
 OBJ_DIR = obj
 SRC_DIR = src
@@ -33,7 +33,7 @@ $(APP_NAME): $(APP_PATH)
 -include $(DEPS)
 
 $(APP_PATH): $(APP_OBJECTS) $(LIB_PATH)
-	$(CC) $(CFLAGS) $(DEBUG) $(CPPFLAGS) -o $@ $^ -lm -lcomputer -Lobj/src/computer
+	$(CC) $(CFLAGS) $(DEBUG) $(CPPFLAGS) -o $@ $^ -lm -l$(LIB_NAME) -Lobj/src/$(LIB_NAME)
 
 $(LIB_PATH): $(LIB_OBJECTS)
 	ar rcs $@ $^
