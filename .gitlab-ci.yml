@@ -19,4 +19,4 @@ build:
 test:
   stage: test
   script:
-    - make test && make run_test
+    - make test && make test_run
