@@ -1,17 +1,19 @@
 #pragma once
+enum colors {
+    darkgrey = 0, // "\e[0;30m"
+    red, // "\e[0;31m"
+    green, // "\e[0;32m"
+    yellow, // "\e[0;33m"
+    blue, // "\e[0;34m"
+    magenta, // "\e[0;35m"
+    cyan, // "\e[0;36m"
+    grey, // "\e[0;37m"
+    white, // "\e[0;38m"
+};
 
-int sc_init();
-int sc_regGet(int reg, int* value);
-int sc_regSet(int reg, int value);
-void sc_regInit();
-
-int sc_memorySave(char* filename);
-int sc_memoryLoad(char* filename);
-int sc_memoryGet(int address, int* value);
-int sc_memorySet(int address, int value);
-void sc_memoryRand();
-void sc_outputMemory();
-
-int sc_commandEncode(int command, int operand, int* value);
-int sc_commandDecode(int value, int* command, int* operand);
-int compare(const void* n1, const void* n2);
+int mt_clrscr(void);
+int mt_gotoXY(int x, int y);
+int mt_getscreensize(int* rows, int* cols);
+int mt_setfgcolor(enum colors c);
+int mt_setbgcolor(enum colors c);
+int num_length(float x);

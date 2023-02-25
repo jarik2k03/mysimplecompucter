@@ -1,211 +1,117 @@
 #include "term.h"
 
+#include <fcntl.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
+#define TERMINAL_PATH "/dev/tty"
 #define RAM 100
 #define NULLBIT 0x0
 #define BIT 0x1
 #define MASK 0x7f
+#define BUFSIZE 15
+#define CLEAR "\033[1;1H\033[2J"
+#define FGCOLOR "\033[0;38m"
+#define BGCOLOR "\033[0;48m"
 
-static int* memory = NULL;
-static int registr; // переменная, хранящая флаги
+char* buffer;
 
-static int commandSet[] = {
-    10,
-    11,
-    20,
-    21,
-    30,
-    31,
-    32,
-    33,
-    40,
-    41,
-    42,
-    43,
-    51,
-    52,
-    53,
-    54,
-    55,
-    56,
-    57,
-    58,
-    59,
-    60,
-    61,
-    62,
-    63,
-    64,
-    65,
-    66,
-    67,
-    68,
-    69,
-    70,
-    71,
-    72,
-    73,
-    74,
-    75,
-    76,
-};
-
-int sc_init()
+int mt_clrscr(void)
 {
-    memory = calloc(RAM, sizeof(int));
-    sc_regInit();
-    if (memory != NULL) {
-        printf("СуперКомпьютер запущен. Добро пожаловать!\n");
-        return 0;
-    } else {
-        printf("Недостаточно ОЗУ для запуска.");
+    int terminal = open(TERMINAL_PATH, O_WRONLY); // дескриптор для записи
+    if (terminal == -1)
         return -1;
-    }
-}
 
-int sc_memorySave(char* filename)
-{
-    FILE* output_file = fopen(filename, "wb");
+    const int bufsize = sizeof(CLEAR);
+    buffer = malloc(bufsize * sizeof(char));
 
-    if (output_file == NULL) {
-        fclose(output_file);
-        return -1;
-    }
+    sprintf(buffer, CLEAR); //запись в буфер
+    write(terminal, buffer, bufsize); // запись в терминал
 
-    if (fwrite(memory, sizeof(int), 100, output_file) != 100) {
-        return -1;
-    }
-
-    fclose(output_file);
+    free(buffer);
+    close(terminal);
 
     return 0;
 }
 
-int sc_memoryLoad(char* filename)
+int mt_gotoXY(int x, int y)
 {
-    FILE* input_file = fopen(filename, "rb");
-
-    if (input_file == NULL) {
-        fclose(input_file);
+    if (x < 0 || y < 0)
         return -1;
-    }
 
-    if (fread(memory, sizeof(int), 100, input_file) != 100) {
+    int terminal = open(TERMINAL_PATH, O_WRONLY); // дескриптор для записи
+    if (terminal == -1)
         return -1;
-    }
 
-    fclose(input_file);
+    const int bufsize = sizeof("\033[;f]") + num_length(x) + num_length(y);
+    buffer = malloc(bufsize * sizeof(char));
+
+    sprintf(buffer, "\033[%d;%df", x, y); //запись в буфер
+    write(terminal, buffer, bufsize); // запись в терминал
+
+    free(buffer);
+    close(terminal);
 
     return 0;
 }
 
-int sc_memoryGet(int address, int* value)
+int mt_getscreensize(int* rows, int* cols)
 {
-    if (value == NULL || address < 0 || address > 99) {
-        sc_regSet(3, 1);
+    struct winsize ws;
+    if (cols == NULL || rows == NULL)
         return -1;
-    }
-    *value = memory[address];
+    if (ioctl(1, TIOCGWINSZ, &ws))
+        return -1;
+
+    *rows = ws.ws_row;
+    *cols = ws.ws_col;
     return 0;
 }
 
-int sc_memorySet(int address, int value) //reg - номер разряда
+int mt_setfgcolor(enum colors c)
 {
-    if (address < 0 || address > 99) {
-        sc_regSet(3, 1);
+    int terminal = open(TERMINAL_PATH, O_WRONLY);
+    if (terminal == -1)
         return -1;
-    }
 
-    memory[address] = value;
+    const int bufsize = sizeof(FGCOLOR);
+    buffer = malloc(bufsize * sizeof(char));
+
+    sprintf(buffer, "\033[0;3%dm", c); //запись в буфер
+    write(terminal, buffer, bufsize); // запись в терминал
+
+    free(buffer);
+    close(terminal);
     return 0;
 }
 
-int sc_regGet(int reg, int* value) //reg - номер разряда
+int mt_setbgcolor(enum colors c)
 {
-    if (reg < 1 || reg > 5) {
-        return -1;
-    }
-    if (value == NULL)
+    int terminal = open(TERMINAL_PATH, O_WRONLY);
+    if (terminal == -1)
         return -1;
 
-    *value = (registr >> (reg - 1)) & BIT;
-    //printf("%d", registr >> (reg - 1));
+    const int bufsize = sizeof(BGCOLOR);
+    buffer = malloc(bufsize * sizeof(char));
 
+    sprintf(buffer, "\033[0;4%dm", c); //запись в буфер
+    write(terminal, buffer, bufsize); // запись в терминал
+
+    free(buffer);
+    close(terminal);
     return 0;
 }
 
-int sc_regSet(int reg, int value) //reg - номер разряда
+int num_length(float x)
 {
-    if (reg < 1 || reg > 5)
-        return -1;
-    if (value != 0 && value != 1)
-        return -1;
+    if (x == 0)
+        return 1;
 
-    if (value == 1)
-        registr |= (1 << (reg - 1)); // задвигаем единичку на нужную позицию и записываем в регистр
-    else
-        registr &= (~(1 << (reg - 1))); // задвигаем единичку на нужную позицию и записываем в регистр
+    int degree = 0;
+    for (float i = 1; (x / i) >= 1; i *= 10)
+        degree++;
 
-    return 0;
-}
-
-void sc_regInit()
-{
-    registr = 0;
-}
-
-void sc_outputMemory()
-{
-    for (u_int8_t i = 0; i != 100; ++i) {
-        if (i % 10 == 0) {
-            printf("\n");
-        }
-        printf("%3d ", memory[i]);
-    }
-
-    printf("\n");
-}
-
-int sc_commandEncode(int command, int operand, int* value)
-{
-    int length = sizeof(commandSet) / sizeof(commandSet[0]);
-    int* found = bsearch(&command, commandSet, length, sizeof(int), compare);
-    if (found == NULL)
-        return -1;
-    if (value == NULL || operand > MASK || command > MASK)
-        return -1;
-
-    *value = NULLBIT;
-
-    *value = command << 7;
-    *value |= operand;
-    return 0;
-}
-
-int sc_commandDecode(int value, int* command, int* operand)
-{
-    if (command == NULL || operand == NULL) {
-        sc_regSet(5, 1);
-        return -1;
-    }
-
-    *operand = *command = NULLBIT;
-
-    *operand = value & MASK;
-    value >>= 7;
-    *command = value;
-    return 0;
-}
-
-int compare(const void* n1, const void* n2)
-{
-    return (*(int*)n1 - *(int*)n2);
-}
-
-void sc_memoryRand()
-{
-    for (uint8_t i = 0; i < 50; i++)
-        sc_memorySet(rand() % 100, rand() % 40);
+    return degree;
 }

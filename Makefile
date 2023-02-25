@@ -33,7 +33,7 @@ $(APP_NAME): $(APP_PATH)
 -include $(DEPS)
 
 $(APP_PATH): $(APP_OBJECTS) $(LIB_PATH)
-	$(CC) $(CFLAGS) $(DEBUG) $(CPPFLAGS) -o $@ $^ -lm -l$(LIB_NAME) -Lobj/src/$(LIB_NAME)
+	$(CC) $(CFLAGS) $(DEBUG) $(CPPFLAGS) -o $@ $^ -l$(LIB_NAME) -Lobj/src/$(LIB_NAME)
 
 $(LIB_PATH): $(LIB_OBJECTS)
 	ar rcs $@ $^
@@ -59,5 +59,5 @@ clean:
 
 run:
 	-$(APP_PATH)
-run_test:
+test_run:
 	-$(TEST_PATH) 
