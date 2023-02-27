@@ -8,10 +8,10 @@ stages:
 check-format:
   stage: check-format
   script:
-    - find . -type f -name 'src/*.[ch]' | xargs clang-format --style GNU -i --verbose
+    - find . -type f -name '*.[ch]' -not -path './thirdparty/*' | xargs clang-format --style GNU -i --verbose
     - git diff --exit-code
 
 build:
   stage: build
   script:
-    - make && make run
+    - make

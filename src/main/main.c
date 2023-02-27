@@ -1,16 +1,17 @@
 #include <stdio.h>
 #include <term/term.h>
 
-int main(void)
+int
+main (void)
 {
-    int row, col;
-    mt_clrscr();
+  int row, col;
+  mt_clrscr ();
 
-    mt_setfgcolor(green);
-    mt_setbgcolor(red);
-    mt_getscreensize(&row, &col);
-    printf("Размер окна: %d %d\n", row, col);
-    mt_setbgcolor(white);
+  mt_setfgcolor (green);
+  mt_setbgcolor (red);
+  mt_getscreensize (&row, &col);
+  printf ("Размер окна: %d %d\n", row, col);
+  mt_setbgcolor (white);
 
-    mt_gotoXY(10, 10);
+  mt_gotoXY (10, 10);
 }
