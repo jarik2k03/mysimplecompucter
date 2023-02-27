@@ -42,8 +42,8 @@ DEPS = $(APP_OBJECTS:.o=.d) $(LIB_OBJECTS:.o=.d) $(COMP_OBJECTS:.o=.d)
 
 
 
-.PHONY: $(APP_NAME)
-$(APP_NAME): mkdir $(APP_PATH)
+.PHONY: $(APP_NAME) 
+$(APP_NAME): mkdir $(APP_PATH) $(TESTCOMP_NAME) $(TESTTERM_NAME)
 
 -include $(DEPS)
 
