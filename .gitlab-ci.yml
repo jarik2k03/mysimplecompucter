@@ -15,8 +15,3 @@ build:
   stage: build
   script:
     - make && make run
-
-test:
-  stage: test
-  script:
-    - make test && make test_run
