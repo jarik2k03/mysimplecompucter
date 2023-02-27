@@ -1,5 +1,5 @@
 #include "../thirdparty/ctest.h"
-#include <term/term.h>
+#include <myTerm/myTerm.h>
 #define SUCCESS 0
 #define FAIL -1
 

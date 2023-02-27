@@ -1,6 +1,10 @@
 APP_NAME = main
-LIB_NAME = term
+LIB_NAME = myTerm
+COMP_NAME = mySimpleComputer
 TEST_NAME = test
+TESTCOMP_NAME = testmySimpleComputer
+TESTTERM_NAME = testmyTerm
+
 DEBUG = -g3 -O0
 
 CFLAGS = -Wall -Wextra -Werror -Wcomments -Wdeprecated -Wformat-extra-args -Wno-pragmas -Wstrict-overflow=5 -Wpedantic
@@ -12,7 +16,9 @@ SRC_DIR = src
 
 APP_PATH = $(BIN_DIR)/$(APP_NAME)
 LIB_PATH = $(OBJ_DIR)/$(SRC_DIR)/$(LIB_NAME)/lib$(LIB_NAME).a
-TEST_PATH = $(BIN_DIR)/$(TEST_NAME)
+COMP_PATH = $(OBJ_DIR)/$(SRC_DIR)/$(COMP_NAME)/lib$(COMP_NAME).a
+TESTCOMP_PATH = $(BIN_DIR)/$(TESTCOMP_NAME)
+TESTTERM_PATH = $(BIN_DIR)/$(TESTTERM_NAME)
 
 SRC_EXT = c
 
@@ -22,40 +28,76 @@ APP_OBJECTS = $(APP_SOURCES:$(SRC_DIR)/%.$(SRC_EXT)=$(OBJ_DIR)/$(SRC_DIR)/%.o)
 LIB_SOURCES = $(shell find $(SRC_DIR)/$(LIB_NAME) -name '*.$(SRC_EXT)')
 LIB_OBJECTS = $(LIB_SOURCES:$(SRC_DIR)/%.$(SRC_EXT)=$(OBJ_DIR)/$(SRC_DIR)/%.o)
 
-TEST_SOURCES = $(shell find $(TEST_NAME) -name '*.$(SRC_EXT)')
-TEST_OBJECTS = $(TEST_SOURCES:$(TEST_NAME)/%.c=$(OBJ_DIR)/$(TEST_NAME)/%.o)
+COMP_SOURCES = $(shell find $(SRC_DIR)/$(COMP_NAME) -name '*.$(SRC_EXT)')
+COMP_OBJECTS = $(COMP_SOURCES:$(SRC_DIR)/%.$(SRC_EXT)=$(OBJ_DIR)/$(SRC_DIR)/%.o)
 
-DEPS = $(APP_OBJECTS:.o=.d) $(LIB_OBJECTS:.o=.d)
+TESTCOMP_SOURCES = $(TEST_NAME)/main.c $(TEST_NAME)/$(COMP_NAME).c
+TESTCOMP_OBJECTS = $(TESTCOMP_SOURCES:$(TEST_NAME)/%.c=$(OBJ_DIR)/$(TEST_NAME)/%.o)
+
+TESTTERM_SOURCES = $(TEST_NAME)/main.c $(TEST_NAME)/$(LIB_NAME).c
+TESTTERM_OBJECTS = $(TESTTERM_SOURCES:$(TEST_NAME)/%.c=$(OBJ_DIR)/$(TEST_NAME)/%.o)
+
+
+DEPS = $(APP_OBJECTS:.o=.d) $(LIB_OBJECTS:.o=.d) $(COMP_OBJECTS:.o=.d)
+
+
 
 .PHONY: $(APP_NAME)
-$(APP_NAME): $(APP_PATH)
+$(APP_NAME): mkdir $(APP_PATH)
 
 -include $(DEPS)
 
-$(APP_PATH): $(APP_OBJECTS) $(LIB_PATH)
+.PHONY: mkdir
+mkdir:
+	[ -d $(BIN_DIR) ] || mkdir $(BIN_DIR)
+	[ -d $(OBJ_DIR) ] || mkdir $(OBJ_DIR)
+	[ -d $(OBJ_DIR)/$(SRC_DIR) ] || mkdir $(OBJ_DIR)/$(SRC_DIR)
+	[ -d $(OBJ_DIR)/$(SRC_DIR)/$(LIB_NAME) ] || mkdir $(OBJ_DIR)/$(SRC_DIR)/$(LIB_NAME)
+	[ -d $(OBJ_DIR)/$(SRC_DIR)/$(COMP_NAME) ] || mkdir $(OBJ_DIR)/$(SRC_DIR)/$(COMP_NAME)
+	[ -d $(OBJ_DIR)/$(SRC_DIR)/$(APP_NAME) ] || mkdir $(OBJ_DIR)/$(SRC_DIR)/$(APP_NAME)
+	[ -d $(OBJ_DIR)/$(TEST_NAME) ] || mkdir $(OBJ_DIR)/$(TEST_NAME)
+
+$(APP_PATH): $(APP_OBJECTS) $(LIB_PATH) $(COMP_PATH)
+	
 	$(CC) $(CFLAGS) $(DEBUG) $(CPPFLAGS) -o $@ $^ -l$(LIB_NAME) -Lobj/src/$(LIB_NAME)
 
 $(LIB_PATH): $(LIB_OBJECTS)
+	ar rcs $@ $^
+	
+$(COMP_PATH): $(COMP_OBJECTS)
 	ar rcs $@ $^
 
 $(OBJ_DIR)/%.o: %.c
 	$(CC) $(CFLAGS) $(DEBUG) $(CPPFLAGS) -c -o $@ $<
 
-.PHONY: $(TEST_NAME)
-$(TEST_NAME): $(TEST_PATH)
+
+
+.PHONY: $(TESTCOMP_NAME)
+$(TESTCOMP_NAME): mkdir $(TESTCOMP_PATH)
 
 -include $(DEPS)
 
-$(TEST_PATH): $(TEST_OBJECTS) $(LIB_PATH) 
+$(TESTCOMP_PATH): $(TESTCOMP_OBJECTS) $(COMP_PATH)
 	$(CC) $(CFLAGS) $(DEBUG) $(CPPFLAGS) -o $@ $^ -lm
+
+
+.PHONY: $(TESTTERM_NAME)
+$(TESTTERM_NAME): mkdir $(TESTTERM_PATH)
+
+$(TESTTERM_PATH): $(TESTTERM_OBJECTS) $(LIB_PATH)
+	$(CC) $(CFLAGS) $(DEBUG) $(CPPFLAGS) -o $@ $^ -lm
+
 
 $(OBJ_DIR)/%.o: %.c
 	$(CC) $(CFLAGS) $(DEBUG) $(CPPFLAGS) -c -o $@ $<
 
+
+
+
+
 .PHONY: clean
 clean:
-	rm -rf $(APP_PATH) $(LIB_PATH) $(TEST_PATH)
-	rm -rf $(DEPS) $(APP_OBJECTS) $(LIB_OBJECTS) $(TEST_OBJECTS)
+	rm -rf bin obj
 
 run:
 	-$(APP_PATH)

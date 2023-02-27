@@ -1,5 +1,6 @@
 #include <stdio.h>
-#include <term/term.h>
+#include <myTerm/myTerm.h>
+#include <mySimpleComputer/mySimpleComputer.h>
 
 int
 main (void)

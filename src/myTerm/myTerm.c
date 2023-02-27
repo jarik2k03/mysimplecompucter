@@ -1,4 +1,4 @@
-#include "term.h"
+#include "myTerm.h"
 
 #include <fcntl.h>
 #include <inttypes.h>

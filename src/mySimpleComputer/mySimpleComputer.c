@@ -1,4 +1,4 @@
-#include "computer.h"
+#include "mySimpleComputer.h"
 
 #include <inttypes.h>
 #include <stdio.h>
