@@ -1,19 +1,18 @@
-#include <computer/computer.h>
 #include <stdio.h>
+#include <myTerm/myTerm.h>
+#include <mySimpleComputer/mySimpleComputer.h>
 
-int main(void)
+int
+main (void)
 {
-    int command = 41, operand = 127;
-    int value = 0;
-    sc_init();
+  int row, col;
+  mt_clrscr ();
 
-    //sc_memoryRand();
-    sc_memoryLoad("load.bin");
-    // sc_memorySave("save.bin");
+  mt_setfgcolor (green);
+  mt_setbgcolor (red);
+  mt_getscreensize (&row, &col);
+  printf ("Размер окна: %d %d\n", row, col);
+  mt_setbgcolor (white);
 
-    sc_outputMemory();
-    sc_commandEncode(command, operand, &value);
-    printf("Закодировано: %d\n", value);
-    sc_commandDecode(value, &command, &operand);
-    printf("Декодирована команда: %d, операнд: %d\n", command, operand);
+  mt_gotoXY (10, 10);
 }
