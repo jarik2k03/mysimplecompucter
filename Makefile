@@ -10,7 +10,7 @@ TESTCHAR = testmyBigChars
 DEBUG = -g3 -O0
 MD = mkdir
 
-CFLAGS =  -Werror -Wcomments -Wdeprecated -Wformat-extra-args -Wno-pragmas -Wstrict-overflow=5 -Wchar-subscripts -Wmultistatement-macros -Wparentheses -Warray-bounds=2 -fdiagnostics-show-option
+CFLAGS =  -Werror -Wcomments -Wdeprecated -Wno-pragmas -Wstrict-overflow=5 -Wchar-subscripts -Wmultistatement-macros -Wparentheses -Warray-bounds=2 -fdiagnostics-show-option
 CPPFLAGS = -I src -MP -MMD
 GCC = gcc
 BIN = bin
