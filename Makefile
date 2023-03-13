@@ -1,63 +1,102 @@
-APP_NAME = main
-LIB_NAME = computer
-TEST_NAME = test
+MAIN = main
+TERM = myTerm
+COMP = mySimpleComputer
+CHAR = myBigChars
+
+TEST = test
+TESTCOMP = testmySimpleComputer
+TESTTERM = testmyTerm
+TESTCHAR = testmyBigChars
 DEBUG = -g3 -O0
+MD = mkdir
 
-CFLAGS = -Wall -Wextra -Werror -Wcomments -Wdeprecated -Wformat-extra-args -Wno-pragmas -Wstrict-overflow=5 -Wpedantic
+CFLAGS =  -Werror -Wcomments -Wdeprecated -Wno-pragmas -Wstrict-overflow=5 -Wchar-subscripts -Wmultistatement-macros -Wparentheses -Warray-bounds=2 -fdiagnostics-show-option
 CPPFLAGS = -I src -MP -MMD
+GCC = gcc
+BIN = bin
+OBJ = obj
+SRC = src
+C = c
 
-BIN_DIR = bin
-OBJ_DIR = obj
-SRC_DIR = src
+# main
+MAIN_EXE = $(BIN)/$(MAIN).exe
+# статические либы.
+TERM_LIB = $(OBJ)/$(SRC)/$(TERM)/lib$(TERM).a
+COMP_LIB = $(OBJ)/$(SRC)/$(COMP)/lib$(COMP).a
+CHAR_LIB = $(OBJ)/$(SRC)/$(CHAR)/lib$(CHAR).a
+# тесты.
+TESTCOMP_EXE = $(BIN)/$(TESTCOMP).exe
+TESTTERM_EXE = $(BIN)/$(TESTTERM).exe
+TESTCHAR_EXE = $(BIN)/$(TESTCHAR).exe
 
-APP_PATH = $(BIN_DIR)/$(APP_NAME)
-LIB_PATH = $(OBJ_DIR)/$(SRC_DIR)/$(LIB_NAME)/lib$(LIB_NAME).a
-TEST_PATH = $(BIN_DIR)/$(TEST_NAME)
+MAIN_SOURCES = $(shell find $(SRC)/$(MAIN) -name '*.$(C)')
+MAIN_OBJECTS = $(MAIN_SOURCES:$(SRC)/%.$(C)=$(OBJ)/$(SRC)/%.o)
 
-SRC_EXT = c
+TERM_SOURCES = $(shell find $(SRC)/$(TERM) -name '*.$(C)')
+TERM_OBJECTS = $(TERM_SOURCES:$(SRC)/%.$(C)=$(OBJ)/$(SRC)/%.o)
 
-APP_SOURCES = $(shell find $(SRC_DIR)/$(APP_NAME) -name '*.$(SRC_EXT)')
-APP_OBJECTS = $(APP_SOURCES:$(SRC_DIR)/%.$(SRC_EXT)=$(OBJ_DIR)/$(SRC_DIR)/%.o)
+COMP_SOURCES = $(shell find $(SRC)/$(COMP) -name '*.$(C)')
+COMP_OBJECTS = $(COMP_SOURCES:$(SRC)/%.$(C)=$(OBJ)/$(SRC)/%.o)
 
-LIB_SOURCES = $(shell find $(SRC_DIR)/$(LIB_NAME) -name '*.$(SRC_EXT)')
-LIB_OBJECTS = $(LIB_SOURCES:$(SRC_DIR)/%.$(SRC_EXT)=$(OBJ_DIR)/$(SRC_DIR)/%.o)
+CHAR_SOURCES = $(shell find $(SRC)/$(CHAR) -name '*.$(C)')
+CHAR_OBJECTS = $(CHAR_SOURCES:$(SRC)/%.$(C)=$(OBJ)/$(SRC)/%.o)
 
-TEST_SOURCES = $(shell find $(TEST_NAME) -name '*.$(SRC_EXT)')
-TEST_OBJECTS = $(TEST_SOURCES:$(TEST_NAME)/%.c=$(OBJ_DIR)/$(TEST_NAME)/%.o)
+TESTCOMP_SOURCES = $(TEST)/$(MAIN).$(C) $(TEST)/$(COMP).$(C)
+TESTCOMP_OBJECTS = $(TESTCOMP_SOURCES:$(TEST)/%.c=$(OBJ)/$(TEST)/%.o)
 
-DEPS = $(APP_OBJECTS:.o=.d) $(LIB_OBJECTS:.o=.d)
+TESTTERM_SOURCES = $(TEST)/$(MAIN).$(C) $(TEST)/$(TERM).$(C)
+TESTTERM_OBJECTS = $(TESTTERM_SOURCES:$(TEST)/%.c=$(OBJ)/$(TEST)/%.o)
 
-.PHONY: $(APP_NAME)
-$(APP_NAME): $(APP_PATH)
+TESTCHAR_SOURCES = $(TEST)/$(MAIN).$(C) $(TEST)/$(CHAR).$(C)
+TESTCHAR_OBJECTS = $(TESTCHAR_SOURCES:$(TEST)/%.c=$(OBJ)/$(TEST)/%.o)
 
--include $(DEPS)
+$(OBJ)/%.o: %.c
+	$(GCC) $(CFLAGS) $(DEBUG) $(CPPFLAGS) -c -o $@ $<
 
-$(APP_PATH): $(APP_OBJECTS) $(LIB_PATH)
-	$(CC) $(CFLAGS) $(DEBUG) $(CPPFLAGS) -o $@ $^ -lm -lcomputer -Lobj/src/computer
+# make (Первая зависимость - выполняет всё.)
+.PHONY: $(MAIN) 
+$(MAIN): $(MD) $(MAIN_EXE) $(TESTCOMP) $(TESTTERM) $(TESTCHAR)
 
-$(LIB_PATH): $(LIB_OBJECTS)
+# добавление папок для бинарников (bin & obj)
+.PHONY: $(MD)
+mkdir:
+	[ -d $(BIN) ] || mkdir $(BIN)
+	[ -d $(OBJ) ] || mkdir $(OBJ)
+	[ -d $(OBJ)/$(SRC) ] || mkdir $(OBJ)/$(SRC)
+	[ -d $(OBJ)/$(SRC)/$(TERM) ] || mkdir $(OBJ)/$(SRC)/$(TERM)
+	[ -d $(OBJ)/$(SRC)/$(CHAR) ] || mkdir $(OBJ)/$(SRC)/$(CHAR)
+	[ -d $(OBJ)/$(SRC)/$(COMP) ] || mkdir $(OBJ)/$(SRC)/$(COMP)
+	[ -d $(OBJ)/$(SRC)/$(MAIN) ] || mkdir $(OBJ)/$(SRC)/$(MAIN)
+	[ -d $(OBJ)/$(TEST) ] || mkdir $(OBJ)/$(TEST)
+
+# сборка программы со всеми библиотеками.
+$(MAIN_EXE): $(MAIN_OBJECTS) $(TERM_LIB) $(COMP_LIB) $(CHAR_LIB)
+	$(GCC) $(CFLAGS) $(DEBUG) $(CPPFLAGS) -o $@ $^ -l$(TERM) -L$(OBJ)/$(SRC)/$(TERM)
+
+# создание статических библиотек.
+$(COMP_LIB): $(COMP_OBJECTS)
 	ar rcs $@ $^
+$(TERM_LIB): $(TERM_OBJECTS)
+	ar rcs $@ $^
+$(CHAR_LIB): $(CHAR_OBJECTS)
+	ar rcs $@ $^	
 
-$(OBJ_DIR)/%.o: %.c
-	$(CC) $(CFLAGS) $(DEBUG) $(CPPFLAGS) -c -o $@ $<
-
-.PHONY: $(TEST_NAME)
-$(TEST_NAME): $(TEST_PATH)
-
--include $(DEPS)
-
-$(TEST_PATH): $(TEST_OBJECTS) $(LIB_PATH) 
-	$(CC) $(CFLAGS) $(DEBUG) $(CPPFLAGS) -o $@ $^ -lm
-
-$(OBJ_DIR)/%.o: %.c
-	$(CC) $(CFLAGS) $(DEBUG) $(CPPFLAGS) -c -o $@ $<
+# сборка тестов 1лабы.
+.PHONY: $(TESTCOMP)
+$(TESTCOMP): $(TESTCOMP_EXE)
+$(TESTCOMP_EXE): $(TESTCOMP_OBJECTS) $(COMP_LIB)
+	$(GCC) $(CFLAGS) $(DEBUG) $(CPPFLAGS) -o $@ $^
+# сборка тестов 2лабы.
+.PHONY: $(TESTTERM)
+$(TESTTERM): $(TESTTERM_EXE)
+$(TESTTERM_EXE): $(TESTTERM_OBJECTS) $(TERM_LIB)
+	$(GCC) $(CFLAGS) $(DEBUG) $(CPPFLAGS) -o $@ $^
+# сборка тестов 3лабы.
+.PHONY: $(TESTCHAR)
+$(TESTCHAR): $(TESTCHAR_EXE)
+$(TESTCHAR_EXE): $(TESTCHAR_OBJECTS) $(CHAR_LIB) $(TERM_LIB)
+	$(GCC) $(CFLAGS) $(DEBUG) $(CPPFLAGS) -o $@ $^
 
 .PHONY: clean
 clean:
-	rm -rf $(APP_PATH) $(LIB_PATH) $(TEST_PATH)
-	rm -rf $(DEPS) $(APP_OBJECTS) $(LIB_OBJECTS) $(TEST_OBJECTS)
-
-run:
-	-$(APP_PATH)
-run_test:
-	-$(TEST_PATH) 
+	rm -rf $(BIN) $(OBJ)
