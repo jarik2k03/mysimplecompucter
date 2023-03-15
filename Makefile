@@ -57,6 +57,10 @@ $(OBJ)/%.o: %.c
 .PHONY: $(MAIN) 
 $(MAIN): $(MD) $(MAIN_EXE) $(TESTCOMP) $(TESTTERM) $(TESTCHAR)
 
+.PHONY: all
+all: $(MAIN) run
+
+
 # добавление папок для бинарников (bin & obj)
 .PHONY: $(MD)
 mkdir:
@@ -100,3 +104,5 @@ $(TESTCHAR_EXE): $(TESTCHAR_OBJECTS) $(CHAR_LIB) $(TERM_LIB)
 .PHONY: clean
 clean:
 	rm -rf $(BIN) $(OBJ)
+run:
+	$(MAIN_EXE)
