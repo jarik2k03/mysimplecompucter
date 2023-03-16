@@ -10,11 +10,20 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <ctype.h>
+#include <termios.h>
 #include <memory.h>
 
 #define TERMINAL_PATH "/dev/tty"
 
+#define REFRESHONMOVE 1
+#define REFRESHENTER 2
+#define REFRESHSAVELOAD 3
+#define REFRESHRESET 4
+#define RAM 100
+#define INPUT 0
+#define MOVE 1
 int current = 3;
+int mode = MOVE;
 
 void display_bigchar(int value, int x, int shift)
 {
@@ -85,8 +94,19 @@ void main_hints()
 
 void main_flags()
 {
+	int value;
+	char regs[] = "OEVM";
 	mt_gotoXY(11, 74);
-	printf("O E V M");
+
+	for (u_int8_t i = 0; i < 5; i++)
+	{
+		sc_regGet(i + 1, &value);
+		if (value == 1)	mt_setbgcolor(red);
+		else mt_setbgcolor(darkgrey);
+		printf("%c ", regs[i]);
+	}
+	mt_setbgcolor(darkgrey);
+	
 }
 
 void main_accumulator()
@@ -147,44 +167,81 @@ void main_interface()
 void workbykey(enum keys* k)
 {
 	int last = current;
-	int refresh = 0;
+	int refresh = REFRESHONMOVE;
 	
-	if (*k == right) {
-		current++;
-		refresh = 1;
+	if (*k >= 7 && *k <= 10)
+		refresh = REFRESHONMOVE;
+	else if (*k == enter)
+		refresh = REFRESHENTER;
+	else if (*k == load || *k == save)
+		refresh = REFRESHSAVELOAD;
+	else if (*k == reset)
+		refresh = REFRESHRESET;
+
+	if (*k == right) current++;
+	else if (*k == left) current--;
+	else if (*k == up) current -= 10;
+	else if (*k == down) current += 10;
+	
+	if (current < 0) current = 0;
+	else if (current > 99) current = 99;
+
+	if (refresh == REFRESHONMOVE)
+	{	
+		if (last != current) {
+			main_accumulator();
+			main_printCell(last);
+			mt_setbgcolor(darkgrey);
+			main_printCell(current);
+			main_display();
+			mt_gotoXY(26, 1);
+		}
+
 	}
-	else if (*k == left) {
-		current--;
-		refresh = 1;
-	} 
-	else if (*k == up) {
-		current -= 10;
-		refresh = 1;
-	}
-	else if (*k == down) {
-		current += 10;
-		refresh = 1;
-	}
-	if (refresh == 1)
+	else if (refresh == REFRESHSAVELOAD)
 	{
+		int terminal = open(TERMINAL_PATH, O_RDWR);
+		char* filename = malloc(30 * sizeof(char));
+
+		//rk_termrestore("DefaultTerm.dat");
+		rk_mytermregime(1, 0, 0, 1, 1);
+		mt_gotoXY(28, 1);
+		if (*k == save) write(0, "Save to: ", 10);
+		else if (*k == load) write(0, "Load from: ", 12);
 		
-		main_accumulator();
-		main_printCell(last);
-		mt_setbgcolor(darkgrey);
-		main_printCell(current);
-		main_display();
+		scanf("%s", filename);
+		if (*k == save)
+			sc_memorySave(filename);
+		else if (*k == load) {
+			sc_memoryLoad(filename);
+			for (int i = 0; i < RAM; i++)
+				main_printCell(i);
+		}		
+		mt_gotoXY(28, 1);
+		write(0, "                                                 ", 50);
+		mt_gotoXY(26, 1);
+
+	}
+	else if (refresh == REFRESHRESET)
+	{
+		sc_free();
+		sc_init();
+		sc_regInit();
+		for (int i = 0; i < RAM; i++)
+			main_printCell(i);
+		main_flags();
 		mt_gotoXY(26, 1);
 	}
-
-
-	// int terminal = open(TERMINAL_PATH, O_WRONLY);
-	// write(0, MSG_INPUT )
-	// setvbuf(stdout, NULL, _IONBF, 0);
 }
 
 int
 main (void)
 {
+    int terminal = open(TERMINAL_PATH, O_WRONLY);
+    FILE* f = fopen("t.txt", "r+");
+    fprintf(f ,"%d", terminal);
+	fclose(f);
+	//rk_termsave("DefaultTerm.dat");
 	enum keys key = etc;
 	enum keys* k = &key;
 	mt_clrscr ();
@@ -195,19 +252,12 @@ main (void)
 	sc_memorySet(50, 0777);
 	sc_memorySet(99, 0xD3F1);
 	main_interface();
+	
 
 	while (1)
 	{
-		//main_interface();
-		rk_readkey(k);
-		workbykey(k);
-		
-		
-		
-		
-		mt_gotoXY(26, 1);
-		//printf("%d", *k);
-
+			rk_readkey(k);
+			workbykey(k);
 	}
 
 	

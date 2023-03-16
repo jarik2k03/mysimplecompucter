@@ -20,6 +20,7 @@
 #define LEFT_KEY "\033[D"
 #define RIGHT_KEY "\033[C"
 #define ENTER_KEY '\n'
+#define CANCEL_KEY "\033X"
 
 int rk_readkey(enum keys* k)
 {
@@ -46,6 +47,7 @@ int rk_readkey(enum keys* k)
     else if (strncmp(buffer, UP_KEY, 3) == 0) *k = up;
     else if (strncmp(buffer, LEFT_KEY, 3) == 0) *k = left;
     else if (strncmp(buffer, RIGHT_KEY, 3) == 0) *k = right;
+    else if (strncmp(buffer, CANCEL_KEY, 2) == 0) *k = cancel;
     else *k = etc;
 
     close(terminal);
@@ -99,6 +101,7 @@ int rk_termrestore(const char* const file_name)
 int rk_mytermregime(int8_t regime, int8_t vtime, int8_t vmin, int8_t echo, int8_t sigint)
 {
     int terminal = open(TERMINAL_PATH, O_WRONLY);
+
     if (terminal == -1 || isatty(terminal) == 0)
         return -1;
     

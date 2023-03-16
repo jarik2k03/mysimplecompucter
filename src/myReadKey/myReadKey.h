@@ -15,7 +15,8 @@ enum keys {
     left,
     right,
     enter,
-    etc
+    etc,
+    cancel
 };
 
 int rk_readkey(enum keys* k);
