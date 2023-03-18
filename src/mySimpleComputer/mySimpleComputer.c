@@ -198,7 +198,8 @@ sc_memoryRand ()
     sc_memorySet (rand () % 100, rand () % 40);
 }
 
-void sc_free()
+void
+sc_free ()
 {
-  free(memory);
+  free (memory);
 }
