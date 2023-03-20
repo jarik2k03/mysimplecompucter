@@ -23,12 +23,10 @@ sc_init ()
   sc_regInit ();
   if (memory != NULL)
     {
-      printf ("СуперКомпьютер запущен. Добро пожаловать!\n");
       return 0;
     }
   else
     {
-      printf ("Недостаточно ОЗУ для запуска.");
       return -1;
     }
 }
@@ -40,7 +38,6 @@ sc_memorySave (char *filename)
 
   if (output_file == NULL)
     {
-      fclose (output_file);
       return -1;
     }
 
@@ -61,7 +58,6 @@ sc_memoryLoad (char *filename)
 
   if (input_file == NULL)
     {
-      fclose (input_file);
       return -1;
     }
 
@@ -200,4 +196,10 @@ sc_memoryRand ()
 {
   for (uint8_t i = 0; i < 50; i++)
     sc_memorySet (rand () % 100, rand () % 40);
+}
+
+void
+sc_free ()
+{
+  free (memory);
 }

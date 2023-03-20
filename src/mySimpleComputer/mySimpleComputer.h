@@ -11,6 +11,7 @@ int sc_memoryGet (int address, int *value);
 int sc_memorySet (int address, int value);
 void sc_memoryRand ();
 void sc_outputMemory ();
+void sc_free ();
 
 int sc_commandEncode (int command, int operand, int *value);
 int sc_commandDecode (int value, int *command, int *operand);
