@@ -18,11 +18,14 @@
 #define REFRESHENTER 2
 #define REFRESHSAVELOAD 3
 #define REFRESHRESET 4
+#define REFRESHACCUM 5
 #define RAM 100
-#define INPUT 0
-#define MOVE 1
-int current = 3;
-int mode = MOVE;
+
+
+int current = 0;
+
+int accumulator = 0x0000;
+
 
 void
 display_bigchar (int value, int x, int shift)
@@ -116,7 +119,8 @@ void
 main_accumulator ()
 {
   mt_gotoXY (2, 74);
-  printf ("%d", current);
+  char sign = (accumulator & 0x4000) ? '-' : '+';
+  printf ("%c%04X", sign, accumulator);
 }
 
 void
@@ -170,7 +174,7 @@ main_interface ()
   main_hints ();
 }
 
-void
+int
 workbykey (enum keys *k)
 {
   int last = current;
@@ -184,6 +188,8 @@ workbykey (enum keys *k)
     refresh = REFRESHSAVELOAD;
   else if (*k == reset)
     refresh = REFRESHRESET;
+  else if (*k == f5)
+    refresh = REFRESHACCUM;
 
   if (*k == right)
     current++;
@@ -203,7 +209,7 @@ workbykey (enum keys *k)
     {
       if (last != current)
         {
-          main_accumulator ();
+          //main_accumulator ();
           main_printCell (last);
           mt_setbgcolor (darkgrey);
           main_printCell (current);
@@ -216,8 +222,7 @@ workbykey (enum keys *k)
       int terminal = open (TERMINAL_PATH, O_RDWR);
       char *filename = malloc (30 * sizeof (char));
 
-      // rk_termrestore("DefaultTerm.dat");
-      rk_mytermregime (1, 0, 0, 1, 1);
+      rk_mytermregime (1, 0, 1, 1, 1);
       mt_gotoXY (28, 1);
       if (*k == save)
         write (0, "Save to: ", 10);
@@ -237,11 +242,34 @@ workbykey (enum keys *k)
       write (0, "                                                 ", 50);
       mt_gotoXY (26, 1);
     }
+  else if (refresh == REFRESHACCUM)
+    {
+      int buffer;
+      rk_mytermregime (0, 0, 1, 1, 1);
+      mt_gotoXY (28, 1);
+      write (0, "Set accumulator: ", 18);
+      
+      scanf("%x", &buffer);
+      
+      if (buffer < 0xffff) {
+        accumulator = buffer;
+        main_accumulator();
+      
+      }
+
+      mt_gotoXY (28, 1);
+      write (0, "                                                 ", 50);
+      mt_gotoXY (26, 1);
+      
+      
+    }
   else if (refresh == REFRESHRESET)
     {
       sc_free ();
       sc_init ();
       sc_regInit ();
+      accumulator = 0;
+      main_accumulator();
       for (int i = 0; i < RAM; i++)
         main_printCell (i);
       main_flags ();
@@ -252,26 +280,15 @@ workbykey (enum keys *k)
 int
 main (void)
 {
-  int terminal = open (TERMINAL_PATH, O_WRONLY);
-  FILE *f = fopen ("t.txt", "r+");
-  fprintf (f, "%d", terminal);
-  fclose (f);
-  // rk_termsave("DefaultTerm.dat");
-  enum keys key = etc;
-  enum keys *k = &key;
+  enum keys k;
   mt_clrscr ();
   sc_init ();
-  sc_memorySet (10, 0x7F7F);
-  sc_memorySet (0, 1);
-  sc_memorySet (5, 32767);
-  sc_memorySet (50, 0777);
-  sc_memorySet (99, 0xD3F1);
   main_interface ();
 
   while (1)
     {
-      rk_readkey (k);
-      workbykey (k);
+      rk_readkey (&k);
+      workbykey (&k);
     }
 
   return 0;
