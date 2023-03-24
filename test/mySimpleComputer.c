@@ -1,5 +1,6 @@
-#include "../thirdparty/ctest.h"
 #include <mySimpleComputer/mySimpleComputer.h>
+
+#include "../thirdparty/ctest.h"
 #define SUCCESS 0
 #define FAIL -1
 
