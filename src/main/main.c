@@ -1,7 +1,7 @@
 #include <ctype.h>
 #include <fcntl.h>
 #include <memory.h>
-//#include <myBigChars/myBigChars.h>
+#include <myBigChars/myBigChars.h>
 #include <myReadKey/myReadKey.h>
 #include <mySimpleComputer/mySimpleComputer.h>
 #include <myTerm/myTerm.h>
@@ -12,6 +12,7 @@
 #include <sys/ioctl.h>
 #include <termios.h>
 #include <unistd.h>
+#include <signal.h> 
 
 #define TERMINAL_PATH "/dev/tty"
 
@@ -23,7 +24,7 @@ int accumulator = 0x0000;
 
 int registr = 0;
 
-
+size_t rdwrreturn;
 
 void decode_and_print(int address)
 {
@@ -78,26 +79,30 @@ void enter_event()
     char caddress[60], cvalue[100];
     rk_mytermregime(1, 0, 1, 1, 1);
     mt_gotoXY(28, 1);
-    write(0, "Set cell: ", 11);
-    read(0, request, 30);
+    rdwrreturn = write(0, "Set cell: ", 11);
+    rdwrreturn = read(0, request, 30);
 
     uint8_t i = 0, a = 0;
-    for (; request[i] != ' '; i++)
+    for (; request[i] != ' ' || request[i] != '\n' ; i++)
         *(caddress + i) = *(request + i);
     while (request[i] == ' ')
         i++;
-    for (; request[i] != ' '; i++)
+    for (; request[i] != ' ' || request[i] != '\n'; i++)
         operation = *(request + i);
     while (request[i] == ' ')
         i++;
-    for (; request[i] != ' '; i++) 
+    for (; request[i] != ' ' || request[i] != '\n'; i++) {
         *(cvalue + a)= *(request + i);
+        a++;
+    }
+        
     
          
     
     mt_gotoXY(29, 1);
     printf("%s %c %s", caddress, operation, cvalue);
-
+    input_eraser(50);
+    mainpos_cursor();
 }
 
 void move_event(enum keys* k)
@@ -140,10 +145,10 @@ void saveload_event(enum keys* k)
     rk_mytermregime(1, 0, 1, 1, 1);
     mt_gotoXY(28, 1);
     if (*k == save)
-        write(0, "Save to: ", 10);
+        rdwrreturn = write(0, "Save to: ", 10);
     else if (*k == load)
-        write(0, "Load from: ", 12);
-    read(0, filename, 30);
+        rdwrreturn = write(0, "Load from: ", 12);
+    rdwrreturn = read(0, filename, 30);
     if (*k == save) {
         if (sc_memorySave(filename) == -1)
             erropenfile();
@@ -163,9 +168,9 @@ void accumulator_event()
     int buffer;
     rk_mytermregime(0, 0, 1, 1, 1);
     mt_gotoXY(28, 1);
-    write(0, "Set accumulator: ", 18);
+    rdwrreturn = write(0, "Set accumulator: ", 18);
 
-    scanf("%x", &buffer);
+    rdwrreturn = scanf("%x", &buffer);
 
     if (buffer < 0xffff) {
         accumulator = buffer;
