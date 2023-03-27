@@ -1,5 +1,6 @@
-#include "../thirdparty/ctest.h"
 #include <myReadKey/myReadKey.h>
+
+#include "../thirdparty/ctest.h"
 #define SUCCESS 0
 #define FAIL -1
 

@@ -1,295 +1,401 @@
 #include <ctype.h>
-#include <fcntl.h>
+#include <draw/draw.h>
 #include <memory.h>
 #include <myBigChars/myBigChars.h>
 #include <myReadKey/myReadKey.h>
 #include <mySimpleComputer/mySimpleComputer.h>
 #include <myTerm/myTerm.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/ioctl.h>
-#include <termios.h>
 #include <unistd.h>
+#include <sys/time.h>
 
-#define TERMINAL_PATH "/dev/tty"
-
-#define REFRESHONMOVE 1
-#define REFRESHENTER 2
-#define REFRESHSAVELOAD 3
-#define REFRESHRESET 4
-#define REFRESHACCUM 5
 #define RAM 100
 
-
 int current = 0;
-
 int accumulator = 0x0000;
+int registr = 0;
+int counter = 0x0000;
 
+struct itimerval nval = {.it_interval.tv_sec = 2,
+                           .it_interval.tv_usec = 0,
+                           .it_value.tv_sec = 1,
+                           .it_value.tv_usec = 0},
+                 oval = {.it_interval.tv_sec = 0,
+                           .it_interval.tv_usec = 0,
+                           .it_value.tv_sec = 0,
+                           .it_value.tv_usec = 0};
 
-void
-display_bigchar (int value, int x, int shift)
-{
-  int bc_id;
-  if (x == 2)
-    (value & 0x4000) ? (bc_id = 1) : (bc_id = 0);
-  else
-    bc_id = 2 + ((value >> shift) & 0b1111);
+size_t rdwrreturn;
 
-  bc_printbigchar (NUMS[bc_id].N, 14, x, green, yellow);
-  mt_setbgcolor (darkgrey);
-}
-
-void
-draw_frame (int x, int y, int x1, int y1, char *title)
-{
-  bc_box (y, x, y1 - y, x1 - x);
-  mt_gotoXY (y, (x1 + x) / 2 - (strlen (title) / 2));
-  printf ("%s", title);
-}
+void ALU(int command, int operand);
+void event_listener (enum keys *k);
+void run_event (enum keys* k);
 
 void
-main_printCell (int address)
+decode_and_print (int address)
 {
-  int value, row, col, command, operand;
-  char *buf = malloc (6 * sizeof (char));
-  if (sc_memoryGet (address, &value) != 0
-      || sc_commandDecode (value, &command, &operand) != 0)
-    return;
-  row = address / 10;
-  col = address % 10;
-  if (current == address)
+  int value;
+  int command, operand;
+  sc_memoryGet (address, &value);
+
+  sc_commandDecode (value, &command, &operand);
+  command >>= 1;
+
+  if (address == current)
     mt_setbgcolor (green);
 
-  sc_commandDecode (value, &command, &operand);
-  command >>= 1;
-  snprintf (buf, 6, "%c%02X%02X", (value & 0x4000) ? '-' : '+', command,
-            operand);
-
-  mt_gotoXY (2 + row, 2 + col * 6);
-  write (1, buf, 5);
-
-  if (current == address)
-    mt_setbgcolor (darkgrey);
-
-  free (buf);
-  return;
-}
-
-void
-main_hints ()
-{
-  int x = 14, y = 48;
-  mt_gotoXY (x, y);
-  printf ("l\t- load");
-  mt_gotoXY (x++, y);
-  printf ("s\t- save");
-  mt_gotoXY (x++, y);
-  printf ("r\t- run");
-  mt_gotoXY (x++, y);
-  printf ("t\t- step");
-  mt_gotoXY (x++, y);
-  printf ("i\t- reset");
-  mt_gotoXY (x++, y);
-  printf ("F5\t- accumulator");
-  mt_gotoXY (x++, y);
-  printf ("F6\t- instructionCounter");
-}
-
-void
-main_flags ()
-{
-  int value;
-  char regs[] = "OEVM";
-  mt_gotoXY (11, 74);
-
-  for (u_int8_t i = 0; i < 5; i++)
-    {
-      sc_regGet (i + 1, &value);
-      if (value == 1)
-        mt_setbgcolor (red);
-      else
-        mt_setbgcolor (darkgrey);
-      printf ("%c ", regs[i]);
-    }
+  print_cell (address, value, command, operand);
   mt_setbgcolor (darkgrey);
 }
 
 void
-main_accumulator ()
+decode_and_display_bc_ (int lastaddress, int address)
 {
-  mt_gotoXY (2, 74);
-  char sign = (accumulator & 0x4000) ? '-' : '+';
-  printf ("%c%04X", sign, accumulator);
-}
-
-void
-main_counter ()
-{
-  mt_gotoXY (5, 74);
-  printf ("+0000");
-}
-
-void
-main_operation ()
-{
-  mt_gotoXY (8, 74);
-  printf ("+00 : 00");
-}
-
-void
-main_display ()
-{
-  int x = 2;
+  int value, lastvalue;
   int command, operand;
-  int value;
-  sc_memoryGet (current, &value);
+  sc_memoryGet (address, &value);
+  sc_memoryGet (lastaddress, &lastvalue);
+  if (lastvalue == value)
+    return;
   sc_commandDecode (value, &command, &operand);
   command >>= 1;
-
-  display_bigchar (value, x, 0);
-  display_bigchar (command, x += 9, 4);
-  display_bigchar (command, x += 9, 0);
-  display_bigchar (operand, x += 9, 4);
-  display_bigchar (operand, x += 9, 0);
+  print_display (value, command, operand);
 }
 
 void
-main_interface ()
+decode_and_display_bc (int address)
 {
-  draw_frame (1, 1, 60, 11, "Memory");
-  for (int i = 0; i < 100; i++)
-    main_printCell (i);
-  draw_frame (63, 1, 90, 2, "accumulator");
-  main_accumulator ();
-  draw_frame (63, 4, 90, 5, "instructionCounter");
-  main_counter ();
-  draw_frame (63, 7, 90, 8, "Operation");
-  main_operation ();
-  draw_frame (63, 10, 90, 11, "Flags");
-  main_flags ();
-  draw_frame (1, 13, 45, 21, "");
-  main_display ();
-  draw_frame (47, 13, 90, 21, "Keys:  ");
-  main_hints ();
+  int value;
+  int command, operand;
+  sc_memoryGet (address, &value);
+
+  sc_commandDecode (value, &command, &operand);
+  command >>= 1;
+  print_display (value, command, operand);
 }
 
-int
-workbykey (enum keys *k)
+void
+operation_event (int address)
+{
+  int value;
+  int command, operand;
+  sc_memoryGet (address, &value);
+  sc_commandDecode (value, &command, &operand);
+  command >>= 1;
+  char sign = (value & 0x4000) ? '-' : '+';
+  print_operation (sign, command, operand);
+}
+
+void
+register_event (int address)
+{
+  int value;
+  sc_regGet (address, &value);
+  print_regCell (address, value);
+}
+
+void
+counter_event()
+{
+  int buffer;
+  rk_mytermregime (0, 0, 1, 1, 1);
+  mt_gotoXY (28, 1);
+  rdwrreturn = write (0, "Set counter: ", 14);
+
+  rdwrreturn = scanf ("%x", &buffer);
+
+  if (buffer < 0xffff && buffer >= 0)
+    {
+      counter = buffer;
+      print_counter (counter);
+    }
+  input_eraser (50);
+  mainpos_cursor ();
+
+}
+
+void
+enter_event ()
+{
+  char *request = malloc (30 * sizeof (char));
+  // int address, value;
+  // char operation;
+  rk_mytermregime (1, 0, 1, 1, 1);
+  mt_gotoXY (28, 1);
+  rdwrreturn = write (0, "Set cell: ", 11);
+  rdwrreturn = read (0, request, 30);
+
+  mt_gotoXY (29, 1);
+  // printf("%s %c %s", caddress, operation, cvalue);
+  input_eraser (50);
+  mainpos_cursor ();
+}
+
+void
+move_event (enum keys *k)
 {
   int last = current;
-  int refresh = REFRESHONMOVE;
-
-  if (*k >= 7 && *k <= 10)
-    refresh = REFRESHONMOVE;
-  else if (*k == enter)
-    refresh = REFRESHENTER;
-  else if (*k == load || *k == save)
-    refresh = REFRESHSAVELOAD;
-  else if (*k == reset)
-    refresh = REFRESHRESET;
-  else if (*k == f5)
-    refresh = REFRESHACCUM;
-
-  if (*k == right)
-    current++;
-  else if (*k == left)
-    current--;
-  else if (*k == up)
-    current -= 10;
-  else if (*k == down)
-    current += 10;
+  switch (*k)
+    {
+    case right:
+      current++;
+      break;
+    case left:
+      current--;
+      break;
+    case up:
+      current -= 10;
+      break;
+    case down:
+      current += 10;
+      break;
+    default:
+      break;
+    }
 
   if (current < 0)
     current = 0;
   else if (current > 99)
     current = 99;
 
-  if (refresh == REFRESHONMOVE)
+  if (last != current)
     {
-      if (last != current)
-        {
-          //main_accumulator ();
-          main_printCell (last);
-          mt_setbgcolor (darkgrey);
-          main_printCell (current);
-          main_display ();
-          mt_gotoXY (26, 1);
-        }
-    }
-  else if (refresh == REFRESHSAVELOAD)
-    {
-      int terminal = open (TERMINAL_PATH, O_RDWR);
-      char *filename = malloc (30 * sizeof (char));
-
-      rk_mytermregime (1, 0, 1, 1, 1);
-      mt_gotoXY (28, 1);
-      if (*k == save)
-        write (0, "Save to: ", 10);
-      else if (*k == load)
-        write (0, "Load from: ", 12);
-
-      scanf ("%s", filename);
-      if (*k == save)
-        sc_memorySave (filename);
-      else if (*k == load)
-        {
-          sc_memoryLoad (filename);
-          for (int i = 0; i < RAM; i++)
-            main_printCell (i);
-        }
-      mt_gotoXY (28, 1);
-      write (0, "                                                 ", 50);
-      mt_gotoXY (26, 1);
-    }
-  else if (refresh == REFRESHACCUM)
-    {
-      int buffer;
-      rk_mytermregime (0, 0, 1, 1, 1);
-      mt_gotoXY (28, 1);
-      write (0, "Set accumulator: ", 18);
-      
-      scanf("%x", &buffer);
-      
-      if (buffer < 0xffff) {
-        accumulator = buffer;
-        main_accumulator();
-      
-      }
-
-      mt_gotoXY (28, 1);
-      write (0, "                                                 ", 50);
-      mt_gotoXY (26, 1);
-      
-      
-    }
-  else if (refresh == REFRESHRESET)
-    {
-      sc_free ();
-      sc_init ();
-      sc_regInit ();
-      accumulator = 0;
-      main_accumulator();
-      for (int i = 0; i < RAM; i++)
-        main_printCell (i);
-      main_flags ();
-      mt_gotoXY (26, 1);
+      decode_and_print (last);
+      decode_and_print (current);
+      decode_and_display_bc_ (last, current);
+      operation_event (current);
+      mainpos_cursor ();
     }
 }
+
+void
+saveload_event (enum keys *k)
+{
+  char *filename = malloc (30 * sizeof (char));
+  rk_mytermregime (1, 0, 1, 1, 1);
+  mt_gotoXY (28, 1);
+  if (*k == save)
+    rdwrreturn = write (0, "Save to: ", 10);
+  else if (*k == load)
+    rdwrreturn = write (0, "Load from: ", 12);
+  rdwrreturn = read (0, filename, 30);
+  uint8_t endstr = strlen (filename) - 1;
+  ;
+  filename[endstr] = '\0';
+
+  if (*k == save)
+    {
+      if (sc_memorySave (filename) == -1)
+        erropenfile ();
+    }
+  else if (*k == load)
+    {
+      if (sc_memoryLoad (filename) == -1)
+        erropenfile ();
+      for (int i = 0; i < RAM; i++)
+        decode_and_print (i);
+      decode_and_display_bc (current);
+    }
+  free (filename);
+  input_eraser (50);
+  mainpos_cursor ();
+}
+
+void
+accumulator_event ()
+{
+  int buffer;
+  rk_mytermregime (0, 0, 1, 1, 1);
+  mt_gotoXY (28, 1);
+  rdwrreturn = write (0, "Set accumulator: ", 18);
+
+  rdwrreturn = scanf ("%x", &buffer);
+
+  if (buffer < 0xffff && buffer >= 0)
+    {
+      accumulator = buffer;
+      print_accumulator (accumulator);
+    }
+  input_eraser (50);
+  mainpos_cursor ();
+}
+
+void
+reset_event ()
+{
+  sc_free ();
+  sc_init ();
+  sc_regInit ();
+  accumulator = 0;
+  current = 0;
+  registr = 0;
+  counter = 0;
+  print_accumulator (accumulator);
+  operation_event (0);
+  print_counter(counter);
+  for (int i = 0; i < 4; i++)
+    register_event (i);
+  for (int i = 0; i < RAM; i++)
+    decode_and_print (i);
+  decode_and_display_bc (current);
+  mainpos_cursor ();
+}
+
+void
+all_events ()
+{
+  print_interface ();
+  for (uint8_t i = 0; i < RAM; i++)
+    decode_and_print (i);
+  for (int i = 0; i < 4; i++)
+    register_event (i);
+
+  print_counter ();
+  print_accumulator (accumulator);
+  decode_and_display_bc (current);
+  operation_event (current);
+  print_counter(counter);
+}
+
+
+void CU (int signum)
+{
+  enum keys next = right; // шажок вправо.
+  int value, command, operand;
+  sc_memoryGet(counter + 1, &value);
+  if (sc_commandDecode(value, &command, &operand) == 0 || (value & 0x4000) == 0) {
+     if (command >= 30 && command <= 33)
+     	ALU(command, operand);
+     move_event(&next);
+     counter++;
+     print_counter(counter);  
+  
+  }
+  else {
+    sc_regSet(3, 1); // unknown command
+    sc_regSet(4, 1); // ignore n
+    register_event(3);
+    register_event(4);
+    return ;
+  }
+  return ;
+  
+  
+}
+
+void
+run_event (enum keys* k)
+{
+  
+  int value;
+  int ignore;
+  int oldcell = current;
+  current = counter;
+  
+  sc_regGet(3, &ignore); // 3 - ignore N
+  signal(SIGALRM, *CU);
+  setitimer(ITIMER_REAL, &nval, &oval); // start.
+  decode_and_print(oldcell);
+    for (;;) 
+      {
+        sc_memoryGet(counter, &value);
+        if (value & 0x4000) {
+          alarm(0);
+	  break;	        
+        }
+        pause();
+        setitimer(ITIMER_REAL, &nval, &oval); // start.
+      }
+    if (counter >= RAM) {
+      sc_regSet(4, 1); // out from mem.
+      register_event(4);
+    }
+
+    
+} 
+
+void
+event_listener (enum keys *k)
+{
+  if (*k >= 7 && *k <= 10)
+    move_event (k);
+  else if (*k == f6)
+    counter_event ();
+  else if (*k == load || *k == save)
+    saveload_event (k);
+  else if (*k == reset)
+    reset_event ();
+  else if (*k == f5)
+    accumulator_event ();
+  else if (*k == run)
+    run_event (k);
+}
+
+void ALU(int command, int operand) 
+{
+  int cell;
+  sc_memoryGet(operand, &cell);
+  
+  switch (command) {
+    case 0x30: // ADD
+      accumulator += cell & 0x3fff;
+      break;
+    case 0x31: // SUB
+      accumulator -= cell & 0x3fff;
+      break;
+    case 0x32: // DIVIDE
+      accumulator /= cell & 0x3fff;
+      break;
+    case 0x33: // SUB
+      accumulator *= cell & 0x3fff;
+      break;
+    default:
+      break;
+  }
+  print_accumulator(accumulator);
+  print_counter(counter);
+  mainpos_cursor ();
+}
+
+
+
+
 
 int
 main (void)
 {
   enum keys k;
+  int cols, rows;
+  u_int8_t wasSmall = 1;
   mt_clrscr ();
   sc_init ();
-  main_interface ();
-
+  // sc_memoryRand();
   while (1)
     {
-      rk_readkey (&k);
-      workbykey (&k);
+      mt_getscreensize (&rows, &cols);
+      if (rows >= 32 && cols >= 96)
+        {
+          if (wasSmall == 1)
+            {
+              all_events ();
+              mainpos_cursor ();
+              wasSmall = 0;
+            }
+          rk_readkey (&k);
+          event_listener (&k);
+        }
+      else
+        {
+          wasSmall = 1;
+          mt_clrscr ();
+          printf ("РАЗВЕРНИТЕ ПРИЛОЖЕНИЕ НА ПОЛНЫЙ ЭКРАН!");
+          getchar ();
+        }
     }
-
+  sc_free ();
   return 0;
 }

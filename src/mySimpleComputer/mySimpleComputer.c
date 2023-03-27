@@ -195,7 +195,7 @@ void
 sc_memoryRand ()
 {
   for (uint8_t i = 0; i < 50; i++)
-    sc_memorySet (rand () % 100, rand () % 40);
+    sc_memorySet (rand () % 100, rand () % 32767);
 }
 
 void

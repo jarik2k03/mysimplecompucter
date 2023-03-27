@@ -3,6 +3,7 @@ TERM = myTerm
 COMP = mySimpleComputer
 CHAR = myBigChars
 KEYS = myReadKey
+DRAW = draw
 
 TEST = test
 TESTCOMP = testmySimpleComputer
@@ -27,6 +28,7 @@ TERM_LIB = $(OBJ)/$(SRC)/$(TERM)/lib$(TERM).a
 COMP_LIB = $(OBJ)/$(SRC)/$(COMP)/lib$(COMP).a
 CHAR_LIB = $(OBJ)/$(SRC)/$(CHAR)/lib$(CHAR).a
 KEYS_LIB = $(OBJ)/$(SRC)/$(KEYS)/lib$(KEYS).a
+DRAW_LIB = $(OBJ)/$(SRC)/$(DRAW)/lib$(DRAW).a
 # тесты.
 TESTCOMP_EXE = $(BIN)/$(TESTCOMP).exe
 TESTTERM_EXE = $(BIN)/$(TESTTERM).exe
@@ -47,6 +49,9 @@ CHAR_OBJECTS = $(CHAR_SOURCES:$(SRC)/%.$(C)=$(OBJ)/$(SRC)/%.o)
 
 KEYS_SOURCES = $(shell find $(SRC)/$(KEYS) -name '*.$(C)')
 KEYS_OBJECTS = $(KEYS_SOURCES:$(SRC)/%.$(C)=$(OBJ)/$(SRC)/%.o)
+
+DRAW_SOURCES = $(shell find $(SRC)/$(DRAW) -name '*.$(C)')
+DRAW_OBJECTS = $(DRAW_SOURCES:$(SRC)/%.$(C)=$(OBJ)/$(SRC)/%.o)
 
 TESTCOMP_SOURCES = $(TEST)/$(MAIN).$(C) $(TEST)/$(COMP).$(C)
 TESTCOMP_OBJECTS = $(TESTCOMP_SOURCES:$(TEST)/%.c=$(OBJ)/$(TEST)/%.o)
@@ -84,11 +89,12 @@ mkdir:
 	[ -d $(OBJ)/$(SRC)/$(COMP) ] || mkdir $(OBJ)/$(SRC)/$(COMP)
 	[ -d $(OBJ)/$(SRC)/$(KEYS) ] || mkdir $(OBJ)/$(SRC)/$(KEYS)
 	[ -d $(OBJ)/$(SRC)/$(MAIN) ] || mkdir $(OBJ)/$(SRC)/$(MAIN)
+	[ -d $(OBJ)/$(SRC)/$(DRAW) ] || mkdir $(OBJ)/$(SRC)/$(DRAW)
 	[ -d $(OBJ)/$(TEST) ] || mkdir $(OBJ)/$(TEST)
 
 # сборка программы со всеми библиотеками.
-$(MAIN_EXE): $(MAIN_OBJECTS) $(TERM_LIB) $(COMP_LIB) $(CHAR_LIB) $(KEYS_LIB)
-	$(GCC) $(CFLAGS) $(DEBUG) $(CPPFLAGS) -o $@ $^ -l$(TERM) -L$(OBJ)/$(SRC)/$(TERM)
+$(MAIN_EXE): $(MAIN_OBJECTS) $(COMP_LIB) $(CHAR_LIB) $(KEYS_LIB) $(DRAW_LIB) $(TERM_LIB)
+	$(GCC) $(CFLAGS) $(DEBUG) $(CPPFLAGS) -o $@ $^ -l$(COMP) -L$(OBJ)/$(SRC)/$(COMP) -l$(TERM) -L$(OBJ)/$(SRC)/$(TERM) -l$(CHAR) -L$(OBJ)/$(SRC)/$(CHAR) -l$(KEYS) -L$(OBJ)/$(SRC)/$(KEYS) -l$(DRAW) -L$(OBJ)/$(SRC)/$(DRAW)
 
 # создание статических библиотек.
 $(COMP_LIB): $(COMP_OBJECTS)
@@ -98,6 +104,8 @@ $(TERM_LIB): $(TERM_OBJECTS)
 $(CHAR_LIB): $(CHAR_OBJECTS)
 	ar rcs $@ $^	
 $(KEYS_LIB): $(KEYS_OBJECTS)
+	ar rcs $@ $^	
+$(DRAW_LIB): $(DRAW_OBJECTS)
 	ar rcs $@ $^	
 
 # сборка тестов 1лабы.
