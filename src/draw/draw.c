@@ -1,14 +1,10 @@
 #include "draw.h"
 
-#include <fcntl.h>
 #include <myBigChars/myBigChars.h>
-#include <myReadKey/myReadKey.h>
-#include <mySimpleComputer/mySimpleComputer.h>
 #include <myTerm/myTerm.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/ioctl.h>
 #include <unistd.h>
 
 static NUM NUMS[] = { /* + */ { .N[0] = 0xFF181818, .N[1] = 0x181818FF },
@@ -76,7 +72,7 @@ print_hints ()
 void
 print_regCell (int address, uint8_t value)
 {
-  if (address < 0 || address > 3)
+  if (address < 1 || address > 5)
     return;
 
   char regs[] = "OEVM";
@@ -96,10 +92,12 @@ print_accumulator (int32_t accumulator)
 }
 
 void
-print_counter ()
+print_counter (int counter)
 {
+
   mt_gotoXY (5, 74);
-  printf ("+0000");
+  char sign = (counter & 0x4000) ? '-' : '+';
+  printf ("%c%04X", sign, counter);
 }
 
 void
