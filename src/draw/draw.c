@@ -75,11 +75,11 @@ print_regCell (int address, uint8_t value)
   if (address < 1 || address > 5)
     return;
 
-  char regs[] = "OEVM";
+  char regs[] = "OZMTU";
   mt_gotoXY (11, 74 + address);
   if (value == 1)
     mt_setbgcolor (green);
-  printf ("%c", *(regs + address));
+  printf ("%c", *(regs + address - 1));
   mt_setbgcolor (darkgrey);
 }
 

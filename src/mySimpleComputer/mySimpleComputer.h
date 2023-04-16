@@ -1,5 +1,14 @@
 #pragma once
 
+enum regs
+{
+  overflow = 1,
+  zero,
+  memoryfault,
+  ticks,
+  unknown
+};
+
 int sc_init ();
 int sc_regGet (int reg, int *value);
 int sc_regSet (int reg, int value);
