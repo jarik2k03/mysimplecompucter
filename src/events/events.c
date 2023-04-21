@@ -17,17 +17,17 @@
 
 struct itimerval nval = { .it_interval.tv_sec = 2,
                           .it_interval.tv_usec = 0,
-                          .it_value.tv_sec = 1,
-                          .it_value.tv_usec = 0 },
+                          .it_value.tv_sec = 0,
+                          .it_value.tv_usec = 800000 },
                  oval = { .it_interval.tv_sec = 0,
                           .it_interval.tv_usec = 0,
                           .it_value.tv_sec = 0,
                           .it_value.tv_usec = 0 };
 
-int current;
-int accumulator;
-int registr;
-int counter;
+int current = 0;
+int accumulator = 0;
+int registr = 0;
+int counter = 0;
 
 int
 decode_and_print (int address)
@@ -243,7 +243,7 @@ reset_event ()
 void
 all_events ()
 {
-  get_data (&current, &accumulator, &registr, &counter);
+  // get_data (&current, &accumulator, &registr, &counter);
   print_interface ();
   for (uint8_t i = 0; i < RAM; i++)
     decode_and_print (i);

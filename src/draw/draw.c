@@ -27,27 +27,6 @@ static NUM NUMS[] = { /* + */ { .N[0] = 0xFF181818, .N[1] = 0x181818FF },
                       /* F */ { .N[0] = 0x7E02027E, .N[1] = 0x02020202 } };
 
 void
-display_bigchar (int value, int x, int shift)
-{
-  int bc_id;
-  if (x == 2)
-    (value & 0x4000) ? (bc_id = 1) : (bc_id = 0);
-  else
-    bc_id = 2 + ((value >> shift) & 0b1111);
-
-  bc_printbigchar (NUMS[bc_id].N, 14, x, green, yellow);
-  mt_setbgcolor (darkgrey);
-}
-
-void
-draw_frame (int x, int y, int x1, int y1, char *title)
-{
-  bc_box (y, x, y1 - y, x1 - x);
-  mt_gotoXY (y, (x1 + x) / 2 - (strlen (title) / 2));
-  printf ("%s", title);
-}
-
-void
 print_hints ()
 {
   int x = 14, y = 48;
@@ -68,7 +47,25 @@ print_hints ()
   mt_gotoXY (x++, y);
   printf ("F6\t- instructionCounter");
 }
+void
+display_bigchar (int value, int x, int shift)
+{
+  int bc_id;
+  if (x == 2)
+    (value & 0x4000) ? (bc_id = 1) : (bc_id = 0);
+  else
+    bc_id = 2 + ((value >> shift) & 0b1111);
+  bc_printbigchar (NUMS[bc_id].N, 14, x, green, yellow);
+  mt_setbgcolor (darkgrey);
+}
 
+void
+draw_frame (int x, int y, int x1, int y1, char *title)
+{
+  bc_box (y, x, y1 - y, x1 - x);
+  mt_gotoXY (y, (x1 + x) / 2 - (strlen (title) / 2));
+  printf ("%s", title);
+}
 void
 print_regCell (int address, uint8_t value)
 {

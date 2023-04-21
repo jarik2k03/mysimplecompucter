@@ -1,5 +1,4 @@
 #include <myBigChars/myBigChars.h>
-#include <myTerm/myTerm.h>
 
 #include "../thirdparty/ctest.h"
 #define SUCCESS 0

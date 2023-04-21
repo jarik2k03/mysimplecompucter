@@ -2,13 +2,13 @@
 
 #include <fcntl.h>
 #include <inttypes.h>
+#include <myTerm/myTerm.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
 #define TERMINAL_PATH "/dev/tty"
-#define RAM 100
 #define NULLBIT 0x0
 #define BIT 0x1
 #define MASK 0x7f
@@ -192,7 +192,7 @@ bc_box (int x1, int y1, int x2, int y2)
 }
 
 int
-bc_printbigchar (int arr[2], int x, int y, enum colors front, enum colors back)
+bc_printbigchar (int arr[2], int x, int y, int front, int back)
 {
   int a[2];
   a[0] = arr[0];

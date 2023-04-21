@@ -7,27 +7,18 @@
 #include <myReadKey/myReadKey.h>
 #include <mySimpleComputer/mySimpleComputer.h>
 #include <myTerm/myTerm.h>
+#include <retranslators/SAtranslator/SAtranslator.h>
+#include <retranslators/SBtranslator/SBtranslator.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
-#define RAM 100
-
-int current = 0;
-int accumulator = 0x0000;
-int registr = 0;
-int counter = 0x0000;
-
-void
-get_data (int *cur, int *accum, int *reg, int *countr)
-{
-  *cur = current;
-  *accum = accumulator;
-  *reg = registr;
-  *countr = counter;
-}
+extern int current;
+extern int accumulator;
+extern int registr;
+extern int counter;
 
 void
 ALU (int command, int operand)
@@ -54,6 +45,7 @@ ALU (int command, int operand)
     }
   print_accumulator (accumulator);
   print_counter (counter);
+  // read_program ();
   mainpos_cursor ();
 }
 
