@@ -20,7 +20,7 @@
 #define LEFT_KEY "\033[D"
 #define RIGHT_KEY "\033[C"
 #define ENTER_KEY '\n'
-#define CANCEL_KEY "\033X"
+#define QUIT_KEY "\033"
 
 int
 rk_readkey (enum keys *k)
@@ -60,8 +60,8 @@ rk_readkey (enum keys *k)
     *k = left;
   else if (strncmp (buffer, RIGHT_KEY, 3) == 0)
     *k = right;
-  else if (strncmp (buffer, CANCEL_KEY, 2) == 0)
-    *k = cancel;
+  else if (*buffer == '\033')
+    *k = quit;
   else
     *k = etc;
 

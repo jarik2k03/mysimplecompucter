@@ -17,6 +17,7 @@ main (void)
   uint8_t smallWindow = 1;
   mt_clrscr ();
   sc_init ();
+  mt_setfgcolor (white);
   // sc_memoryRand();
   while (1)
     {

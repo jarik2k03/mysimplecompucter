@@ -10,4 +10,5 @@
 int
 read_program ()
 {
+  return 0;
 }

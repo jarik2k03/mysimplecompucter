@@ -148,11 +148,11 @@ print_cell (int address, int value, int command, int operand)
 }
 
 void
-erropenfile ()
+erropenfile (char *message)
 {
   mt_gotoXY (28, 1);
   mt_setbgcolor (red);
-  write (0, "Указанный файл не найден или поврежден!", 73);
+  write (0, message, strlen (message) + 1);
   mt_setbgcolor (darkgrey);
   sleep (1);
   mt_gotoXY (28, 1);

@@ -6,8 +6,9 @@ KEYS = myReadKey
 DRAW = draw
 EVNT = events
 DVCS = devices
-SATR = retranslators/SAtranslator
-SBTR = retranslators/SBtranslator
+SATR = SAtranslator
+SBTR = SBtranslator
+TREE = bstree
 
 TEST = test
 TESTCOMP = testmySimpleComputer
@@ -16,9 +17,9 @@ TESTCHAR = testmyBigChars
 TESTKEYS = testmyReadKey
 DEBUG = -g3 -O0
 MD = mkdir
-LIBS = -l$(COMP) -l$(TERM) -l$(CHAR) -l$(KEYS) -l$(DRAW) -l$(EVNT) -l$(DVCS)
+LIBS = -l$(COMP) -l$(TERM) -l$(CHAR) -l$(KEYS) -l$(DRAW) -l$(EVNT) -l$(DVCS) -l$(SATR) -l$(SBTR) -l$(TREE)
 
-# CFLAGS =  -Wall -Wextra -Werror -Wcomments -Wdeprecated -Wno-pragmas -Wstrict-overflow=5 -Wchar-subscripts -Wmultistatement-macros -Wparentheses -Warray-bounds=2 -fdiagnostics-show-option
+#CFLAGS =  -Wall -Wextra -Werror
 CPPFLAGS = -I src -MP -MMD
 GCC = gcc
 BIN = bin
@@ -36,6 +37,9 @@ KEYS_LIB = $(OBJ)/$(SRC)/lib$(KEYS).a
 DRAW_LIB = $(OBJ)/$(SRC)/lib$(DRAW).a
 EVNT_LIB = $(OBJ)/$(SRC)/lib$(EVNT).a
 DVCS_LIB = $(OBJ)/$(SRC)/lib$(DVCS).a
+SATR_LIB = $(OBJ)/$(SRC)/lib$(SATR).a
+SBTR_LIB = $(OBJ)/$(SRC)/lib$(SBTR).a
+TREE_LIB = $(OBJ)/$(SRC)/lib$(TREE).a
 # тесты.
 TESTCOMP_EXE = $(BIN)/$(TESTCOMP).exe
 TESTTERM_EXE = $(BIN)/$(TESTTERM).exe
@@ -65,6 +69,15 @@ EVNT_OBJECTS = $(EVNT_SOURCES:$(SRC)/%.$(C)=$(OBJ)/$(SRC)/%.o)
 
 DVCS_SOURCES = $(shell find $(SRC)/$(DVCS) -name '*.$(C)')
 DVCS_OBJECTS = $(DVCS_SOURCES:$(SRC)/%.$(C)=$(OBJ)/$(SRC)/%.o)
+
+TREE_SOURCES = $(shell find $(SRC)/$(TREE) -name '*.$(C)')
+TREE_OBJECTS = $(TREE_SOURCES:$(SRC)/%.$(C)=$(OBJ)/$(SRC)/%.o)
+
+SATR_SOURCES = $(shell find $(SRC)/retranslators/$(SATR) -name '*.$(C)')
+SATR_OBJECTS = $(SATR_SOURCES:$(SRC)/retranslators/%.$(C)=$(OBJ)/$(SRC)/retranslators/%.o)
+
+SBTR_SOURCES = $(shell find $(SRC)/retranslators/$(SBTR) -name '*.$(C)')
+SBTR_OBJECTS = $(SBTR_SOURCES:$(SRC)/retranslators/%.$(C)=$(OBJ)/$(SRC)/retranslators/%.o)
 
 TESTCOMP_SOURCES = $(TEST)/$(MAIN).$(C) $(TEST)/$(COMP).$(C)
 TESTCOMP_OBJECTS = $(TESTCOMP_SOURCES:$(TEST)/%.c=$(OBJ)/$(TEST)/%.o)
@@ -105,13 +118,14 @@ mkdir:
 	mkdir -p $(OBJ)/$(SRC)/$(DRAW)
 	mkdir -p $(OBJ)/$(SRC)/$(EVNT)
 	mkdir -p $(OBJ)/$(SRC)/$(DVCS)
-	mkdir -p $(OBJ)/$(SRC)/$(SATR)
-	mkdir -p $(OBJ)/$(SRC)/$(SBTR)
+	mkdir -p $(OBJ)/$(SRC)/$(TREE)
+	mkdir -p $(OBJ)/$(SRC)/retranslators/$(SATR)
+	mkdir -p $(OBJ)/$(SRC)/retranslators/$(SBTR)
 	
 # сборка программы со всеми библиотеками.
-$(MAIN_EXE): $(MAIN_OBJECTS) $(COMP_LIB) $(TERM_LIB) $(CHAR_LIB) $(KEYS_LIB) $(DRAW_LIB) $(EVNT_LIB) $(DVCS_LIB)
+$(MAIN_EXE): $(MAIN_OBJECTS) $(COMP_LIB) $(TERM_LIB) $(CHAR_LIB) $(KEYS_LIB) $(DRAW_LIB) $(EVNT_LIB) $(DVCS_LIB) $(SATR_LIB) $(SBTR_LIB) $(TREE_LIB)
 	@echo "\033[1;31m----СБОРКА КОМПЬЮТЕРА----"
-	$(GCC) $(CFLAGS) $(DEBUG) $(CPPFLAGS) -o $@ $<  obj/src/libdraw.a -L$(OBJ)/$(SRC) $(LIBS)
+	$(GCC) $(CFLAGS) $(DEBUG) $(CPPFLAGS) -o $@ $< obj/src/libdraw.a -L$(OBJ)/$(SRC) $(LIBS)
 
 # создание статических библиотек.
 $(COMP_LIB): $(COMP_OBJECTS)
@@ -134,12 +148,20 @@ $(EVNT_LIB): $(EVNT_OBJECTS)
 	ar rcs $@ $^	
 $(DVCS_LIB): $(DVCS_OBJECTS)
 	@echo -n "\r\033[0;33m\r"
+	ar rcs $@ $^
+$(SATR_LIB): $(SATR_OBJECTS)
+	@echo -n "\r\033[0;33m\r"
 	ar rcs $@ $^	
-
+$(SBTR_LIB): $(SBTR_OBJECTS)
+	@echo -n "\r\033[0;33m\r"
+	ar rcs $@ $^	
+$(TREE_LIB): $(TREE_OBJECTS)
+	@echo -n "\r\033[0;33m\r"
+	ar rcs $@ $^	
+	
 
 .PHONY: tests
 tests: $(TESTCOMP) $(TESTTERM) $(TESTCHAR) $(TESTKEYS)
-
 # сборка тестов 1лабы.
 .PHONY: $(TESTCOMP)
 $(TESTCOMP): $(TESTCOMP_EXE)

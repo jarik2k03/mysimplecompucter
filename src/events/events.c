@@ -6,6 +6,7 @@
 #include <myReadKey/myReadKey.h>
 #include <mySimpleComputer/mySimpleComputer.h>
 #include <myTerm/myTerm.h>
+#include <retranslators/SAtranslator/SAtranslator.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -118,17 +119,19 @@ void
 enter_event ()
 {
   char *request = malloc (30 * sizeof (char));
-  // int address, value;
-  // char operation;
+  int8_t check;
   rk_mytermregime (1, 0, 1, 1, 1);
   mt_gotoXY (28, 1);
   write (0, "Set cell: ", 11);
   read (0, request, 30);
-
-  mt_gotoXY (29, 1);
-  // printf("%s %c %s", caddress, operation, cvalue);
-  input_eraser (50);
-  mainpos_cursor ();
+  request[strlen (request) - 1] = '\0';
+  check = read_program (request);
+  if (check == -1)
+    {
+      input_eraser (50);
+      mainpos_cursor ();
+      free (request);
+    }
 }
 
 void
@@ -185,12 +188,12 @@ saveload_event (enum keys *k)
   if (*k == save)
     {
       if (sc_memorySave (filename) == -1)
-        erropenfile ();
+        erropenfile ("Указанный файл не найден или поврежден!");
     }
   else if (*k == load)
     {
       if (sc_memoryLoad (filename) == -1)
-        erropenfile ();
+        erropenfile ("Указанный файл не найден или поврежден!");
       for (int i = 0; i < RAM; i++)
         decode_and_print (i);
       decode_and_display_bc (current);
@@ -260,7 +263,6 @@ all_events ()
 void
 run_event ()
 {
-
   int value;
   int ignore;
   int oldcell = current;
@@ -296,6 +298,14 @@ step_event ()
 }
 
 void
+quit_event ()
+{
+  rk_mytermregime (1, 1, 1, 1, 1);
+  mt_clrscr ();
+  quick_exit (EXIT_SUCCESS);
+}
+
+void
 event_listener (enum keys *k)
 {
   if (*k >= 7 && *k <= 10)
@@ -312,4 +322,8 @@ event_listener (enum keys *k)
     run_event (k);
   else if (*k == step)
     step_event ();
+  else if (*k == enter)
+    enter_event ();
+  else if (*k == quit)
+    quit_event (k);
 }

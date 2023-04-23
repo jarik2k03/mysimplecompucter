@@ -14,7 +14,7 @@ void saveload_event (enum keys *k);
 void accumulator_event ();
 void reset_event ();
 void all_events ();
-
+void quit_event ();
 void run_event ();
 void step_event ();
 void event_listener (enum keys *k);
