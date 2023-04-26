@@ -14,7 +14,8 @@ void print_counter ();
 void print_operation (int sign, int command, int operand);
 void print_display (int value, int command, int operand);
 void print_interface ();
-void print_cell (int address, int value, int command, int operand);
+void print_cell (int16_t address, int32_t value, int16_t command,
+                 int16_t operand);
 void erropenfile (char *message);
 void mainpos_cursor ();
 void input_eraser (int length);

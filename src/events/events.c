@@ -116,13 +116,13 @@ counter_event ()
 }
 
 void
-enter_event ()
+sat_event ()
 {
   char *request = malloc (30 * sizeof (char));
   int8_t check;
   rk_mytermregime (1, 0, 1, 1, 1);
   mt_gotoXY (28, 1);
-  write (0, "Set cell: ", 11);
+  write (0, "Выберите файл для компиляции: ", 56);
   read (0, request, 30);
   request[strlen (request) - 1] = '\0';
   check = read_program (request);
@@ -132,6 +132,7 @@ enter_event ()
       mainpos_cursor ();
       free (request);
     }
+  write_program (request);
 }
 
 void
@@ -246,7 +247,6 @@ reset_event ()
 void
 all_events ()
 {
-  // get_data (&current, &accumulator, &registr, &counter);
   print_interface ();
   for (uint8_t i = 0; i < RAM; i++)
     decode_and_print (i);
@@ -318,12 +318,12 @@ event_listener (enum keys *k)
     reset_event ();
   else if (*k == f5)
     accumulator_event ();
+  else if (*k == f7)
+    sat_event ();
   else if (*k == run)
     run_event (k);
   else if (*k == step)
     step_event ();
-  else if (*k == enter)
-    enter_event ();
   else if (*k == quit)
     quit_event (k);
 }

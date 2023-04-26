@@ -46,6 +46,8 @@ print_hints ()
   printf ("F5\t- accumulator");
   mt_gotoXY (x++, y);
   printf ("F6\t- instructionCounter");
+  mt_gotoXY (x++, y);
+  printf ("F7\t- SA retranslator");
 }
 void
 display_bigchar (int value, int x, int shift)
@@ -129,15 +131,15 @@ print_interface ()
 }
 
 void
-print_cell (int address, int value, int command, int operand)
+print_cell (int16_t address, int32_t value, int16_t command, int16_t operand)
 {
   int row, col;
-  char *buf = malloc (6 * sizeof (char));
+  char *buf = malloc (7 * sizeof (char));
 
   row = address / 10;
   col = address % 10;
 
-  snprintf (buf, 6, "%c%02X%02X", (value & 0x4000) ? '-' : '+', command,
+  snprintf (buf, 7, "%c%02X%02X\n", (value & 0x4000) ? '-' : '+', command,
             operand);
 
   mt_gotoXY (2 + row, 2 + col * 6);
@@ -155,6 +157,7 @@ erropenfile (char *message)
   write (0, message, strlen (message) + 1);
   mt_setbgcolor (darkgrey);
   sleep (1);
+  input_eraser (strlen (message));
   mt_gotoXY (28, 1);
 }
 

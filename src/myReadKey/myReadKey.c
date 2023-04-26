@@ -13,6 +13,7 @@
 #define TERMINAL_PATH "/dev/tty"
 
 #define KEYS "lsrti"
+#define F7_KEY "\033[18~"
 #define F5_KEY "\033[15~"
 #define F6_KEY "\033[17~"
 #define DOWN_KEY "\033[B"
@@ -48,6 +49,8 @@ rk_readkey (enum keys *k)
     *k = reset;
   else if (*buffer == '\n')
     *k = enter;
+  else if (strncmp (buffer, F7_KEY, 4) == 0)
+    *k = f7;
   else if (strncmp (buffer, F5_KEY, 4) == 0)
     *k = f5;
   else if (strncmp (buffer, F6_KEY, 4) == 0)

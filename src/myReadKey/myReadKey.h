@@ -16,6 +16,7 @@ enum keys
   left,
   right,
   enter,
+  f7,
   quit,
   etc
 };

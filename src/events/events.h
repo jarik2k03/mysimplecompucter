@@ -8,7 +8,7 @@ void decode_and_display_bc (int address);
 void operation_event (int address);
 void register_event (int address);
 void counter_event ();
-void enter_event ();
+void sat_event ();
 void move_event (enum keys *k);
 void saveload_event (enum keys *k);
 void accumulator_event ();

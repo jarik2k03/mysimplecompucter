@@ -28,7 +28,7 @@ SRC = src
 C = c
 
 # main
-MAIN_EXE = $(BIN)/$(MAIN).exe
+MAIN_EXE = $(MAIN).exe
 # статические либы.
 TERM_LIB = $(OBJ)/$(SRC)/lib$(TERM).a
 COMP_LIB = $(OBJ)/$(SRC)/lib$(COMP).a
@@ -191,7 +191,7 @@ $(TESTKEYS_EXE): $(TESTKEYS_OBJECTS)
 clean:
 	rm -rf $(BIN) $(OBJ)
 run:
-	$(MAIN_EXE)
+	./$(MAIN_EXE)
 format:
 	@echo "\033[1;32m----ФОРМАТИРОВАНИЕ ИСХОДНОГО КОДА----"
 	find . -type f -name '*.[ch]' -not -path './thirdparty/*' | xargs clang-format --style GNU -i --verbose
