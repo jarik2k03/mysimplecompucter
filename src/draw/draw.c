@@ -1,9 +1,9 @@
 #include "draw.h"
 
+#include <malloc.h>
 #include <myBigChars/myBigChars.h>
 #include <myTerm/myTerm.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 

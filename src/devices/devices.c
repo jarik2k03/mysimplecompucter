@@ -1,17 +1,14 @@
 #include "devices.h"
 
-#include <ctype.h>
 #include <draw/draw.h>
 #include <events/events.h>
+#include <malloc.h>
 #include <myBigChars/myBigChars.h>
 #include <myReadKey/myReadKey.h>
 #include <mySimpleComputer/mySimpleComputer.h>
 #include <myTerm/myTerm.h>
-#include <retranslators/SAtranslator/SAtranslator.h>
-#include <retranslators/SBtranslator/SBtranslator.h>
-#include <signal.h>
+
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -28,16 +25,16 @@ ALU (int command, int operand)
 
   switch (command)
     {
-    case 0x30: // ADD
+    case 30: // ADD
       accumulator += cell & 0x3fff;
       break;
-    case 0x31: // SUB
+    case 31: // SUB
       accumulator -= cell & 0x3fff;
       break;
-    case 0x32: // DIVIDE
+    case 32: // DIVIDE
       accumulator /= cell & 0x3fff;
       break;
-    case 0x33: // MUL
+    case 33: // MUL
       accumulator *= cell & 0x3fff;
       break;
     default:

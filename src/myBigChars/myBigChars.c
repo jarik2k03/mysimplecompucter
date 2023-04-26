@@ -1,12 +1,10 @@
 #include "myBigChars.h"
 
 #include <fcntl.h>
-#include <inttypes.h>
+#include <malloc.h>
 #include <myTerm/myTerm.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
-#include <sys/ioctl.h>
 #include <unistd.h>
 #define TERMINAL_PATH "/dev/tty"
 #define NULLBIT 0x0

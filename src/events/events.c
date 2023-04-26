@@ -136,6 +136,27 @@ sat_event ()
 }
 
 void
+sbt_event ()
+{
+  char *request = malloc (30 * sizeof (char));
+  int8_t check;
+  rk_mytermregime (1, 0, 1, 1, 1);
+  mt_gotoXY (28, 1);
+  write (1, "Выберите файл для компиляции: ", 56);
+  read (0, request, 30);
+  request[strlen (request) - 1] = '\0';
+  check = read_program (request);
+  if (check == -1)
+    {
+      input_eraser (50);
+      mainpos_cursor ();
+      free (request);
+    }
+  // write_program (request);
+  mainpos_cursor ();
+}
+
+void
 move_event (enum keys *k)
 {
   int last = current;
@@ -319,7 +340,7 @@ event_listener (enum keys *k)
   else if (*k == f5)
     accumulator_event ();
   else if (*k == f7)
-    sat_event ();
+    sbt_event ();
   else if (*k == run)
     run_event (k);
   else if (*k == step)

@@ -124,7 +124,7 @@ sc_regInit ()
 void
 sc_outputMemory ()
 {
-  for (u_int8_t i = 0; i != 100; ++i)
+  for (uint8_t i = 0; i != 100; ++i)
     {
       if (i % 10 == 0)
         {

@@ -1,14 +1,11 @@
 #include "SAtranslator.h"
 #include <bstree/bstree.h>
-#include <ctype.h>
 #include <draw/draw.h>
 #include <mySimpleComputer/mySimpleComputer.h>
 #include <myTerm/myTerm.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
 struct bstree *commands = NULL;
 int *tempmem = NULL;
