@@ -1,32 +1,25 @@
 #include "SBtranslator.h"
 #include <bstree/bstree.h>
 #include <draw/draw.h>
-#include <malloc.h>
 #include <retranslators/SAtranslator/SAtranslator.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
-int8_t *full_mem = NULL;
-
-struct bstree *variables = NULL;
-
-// struct mem *variables = NULL;
 const char commandSet[][8]
     = { "REM", "INPUT", "PRINT", "GOTO", "IF", "LET", "END" };
 
 int16_t SBcounter = 0;
-
 int8_t lastnum = 0;
 FILE *tempSA = NULL;
 
-struct operations
-{
-  int8_t priority;
-  int8_t sign;
-  int8_t pos;
-  char loper;
-  char roper;
-};
+struct command *program;
+
+int gotoCounter = -1;
+struct command *gotoRecords;
+
+int variableCount = 0;
+struct variable Variables[52] = { 0 };
 
 int8_t
 sb_read_program (char *in)
@@ -36,11 +29,13 @@ sb_read_program (char *in)
       erropenfile ("Принимаются только *.sb файлы!");
       return -1;
     }
+  char path1[] = "sc_files/basic/";
+  strcat (path1, in);
+
   if (tempSA == NULL)
-    tempSA = fopen ("sc_files/assembler/~temp.sa", "a+");
-  char path[] = "sc_files/basic/";
-  strcat (path, in);
-  FILE *SBprog = fopen (path, "r+");
+    tempSA = fopen ("sc_files/assembler/translated.sa", "a+");
+
+  FILE *SBprog = fopen (path1, "r+");
 
   if (SBprog == NULL)
     {
@@ -67,11 +62,14 @@ sb_write_program (char *in)
       erropenfile ("Принимаются только *.sb файлы!");
       return -1;
     }
+
+  char path1[] = "sc_files/basic/";
+  strcat (path1, in);
+
   if (tempSA == NULL)
-    tempSA = fopen ("sc_files/assembler/~temp.sa", "a+");
-  char path[] = "sc_files/basic/";
-  strcat (path, in);
-  FILE *SBprog = fopen (path, "r+");
+    tempSA = fopen ("sc_files/assembler/treanslated.sa", "a+");
+
+  FILE *SBprog = fopen (path1, "r+");
 
   if (SBprog == NULL)
     {
@@ -81,8 +79,6 @@ sb_write_program (char *in)
   char command[8];
   int16_t num;
   char *args = calloc (100, sizeof (char));
-  full_mem = calloc (100, sizeof (int8_t));
-  variables = bstree_create ("!", -1);
 
   char line[120];
   while (!feof (SBprog))
@@ -90,10 +86,9 @@ sb_write_program (char *in)
 
       fgets (line, 120, SBprog);
       sscanf (line, "%hd %s %[^\n]s ", &num, command, args);
-      printf ("%hd %s %s\n", num, command, args);
+      // printf ("%hd %s %s\n", num, command, args);
       sb_write (num, command, args);
     }
-  free (variables);
   fclose (SBprog);
   fclose (tempSA);
   return 0;
@@ -108,6 +103,10 @@ sb_write (int16_t num, char *command, char *args)
     PRINT (args);
   else if (strcmp (command, "LET") == 0)
     LET (args);
+  else if (strcmp (command, "IF") == 0)
+    IF (args);
+  else if (strcmp (command, "END") == 0)
+    END ();
 }
 
 int8_t
@@ -129,7 +128,6 @@ sb_string_check (char *str)
   char *args = calloc (100, sizeof (char));
   int16_t num;
   sscanf (str, "%hd %s %[^\n]s ", &num, command, args);
-  // printf ("%hd %s %s\n", num, command, args);
   int8_t returns = 0;
   if (sb_cell_check (num, lastnum) == -1)
     returns = -1;
@@ -158,6 +156,7 @@ sb_cell_check (int16_t num, int16_t lastnum)
   if (num <= lastnum)
     {
       erropenfile ("Ошибка - ячейки должны быть последовательны");
+      lastnum = 0;
       return -1;
     }
   if (num < 0 || num > 99)
@@ -171,18 +170,19 @@ sb_cell_check (int16_t num, int16_t lastnum)
 int8_t
 alloc (char var)
 {
-  struct bstree *allocated = bstree_lookup (variables, &var);
-  if (allocated != NULL)
-    return allocated->value;
+  for (int i = 0; i < 52; i++)
+    {
+      if (Variables[i].Name == var)
+        return Variables[i].Address;
 
-  for (int8_t i = 100; i >= 0; i--)
-    if (full_mem[i] == 0)
-      {
-        full_mem[i] = 1;
-        bstree_add (variables, &var, i);
-        return i;
-      }
-  return -1;
+      if (Variables[i].Name == '\0')
+        {
+          Variables[i].Name = var;
+          Variables[i].Address = 99 - i;
+          variableCount++;
+          return Variables[i].Address;
+        }
+    }
 }
 
 int8_t
@@ -198,8 +198,7 @@ INPUT (char *args)
       erropenfile ("INPUT -- переменная только из одной буквы");
       return -1;
     }
-  full_mem[SBcounter] = 1;
-  fprintf (tempSA, "%d READ\t\t%d\n", SBcounter, alloc (args[0]));
+  fprintf (tempSA, "%.2i READ \t\t%d\n", SBcounter, alloc (args[0]));
   SBcounter++;
 
   return 0;
@@ -218,192 +217,540 @@ PRINT (char *args)
       erropenfile ("PRINT -- переменная только из одной буквы");
       return -1;
     }
-
-  struct bstree *var = bstree_lookup (variables, &args[0]);
-  if (var == NULL)
-    {
-      erropenfile ("PRINT -- необъявленная переменная");
-      return -1;
-    }
-  fprintf (tempSA, "%d WRITE\t\t%d\n", SBcounter, var->value);
+  fprintf (tempSA, "%.2i WRITE \t\t%d\n", SBcounter, alloc (args[0]));
   SBcounter++;
-
   return 0;
 }
 
 int8_t
 LET (char *args)
 {
-  if (args[0] < 'A' || args[0] > 'Z')
-    {
-      erropenfile ("LET -- переменная начинается с заг. буквы");
-      return -1;
-    }
-  fprintf (tempSA, "%d LOAD\t\t%d\n", SBcounter, alloc (args[0]));
-  SBcounter++;
-  struct operations o[8] = { 0 }; // до 8 операций
-
-  if (args[2] != '=')
-    {
-      erropenfile ("LET -- ожидалось '='");
-      return -1;
-    }
-  int8_t i = 4;
-  int8_t priority = 0, next = 1;
-  while (args[i] != '\0')
-    {
-      if (args[i] == '(')
-        priority++;
-      else if (args[i] == ')')
-        priority--;
-
-      if (args[i] >= 'A' && args[i] <= 'Z')
-        {
-          o[next - 1].roper = args[i];
-          o[next].loper = args[i];
-        }
-
-      if (args[i] == '*' || args[i] == '/')
-        {
-          o[next].priority = priority + 1;
-          o[next].sign = args[i];
-          o[next].pos = i;
-          next++;
-        }
-      if (args[i] == '+' || args[i] == '-')
-        {
-          o[next].priority = priority;
-          o[next].sign = args[i];
-          o[next].pos = i;
-          next++;
-        }
-      i++;
-    }
-
-  for (next = 0; next < 8; next++)
-    {
-      printf ("\n%d | %c %c %c", o[next].priority, o[next].loper, o[next].sign,
-              o[next].roper);
-    }
-
-  // for (size_t i = 0; i < count; i++)
-  // {
-  //   /* code */
-  // }
-
-  if (priority != 0)
-    {
-      erropenfile ("LET -- ошибка в расставлении скобок");
-      return -1;
-    }
-
+  char *fin = malloc (255 * sizeof (char));
+  char var;
+  var = preCalcProcessing (args);
+  translateToRPN (args, fin);
+  parsRPN (fin, &var);
   return 0;
 }
 
-// int8_t
-// calc (char *args, int8_t i)
-// {
-//   struct bstree *variables = NULL;
+int8_t
+IF (char *args)
+{
+  int mySign = -1;
+  int before = 0;
+  int after = 0;
 
-//   for (; args[i] != '\0'; i++)
-//     {
-//       if (args[i] == '(')
-//         calc (args, i++);
-//       if (args[i] >= 'A' || args[i] <= 'Z')
-//         printf ("%c ", args[i]);
-//       printf ("i: %d\n", i);
-//       if (args[i] == '*' || args[i] == '/')
-//         printf ("%c ", args[i]);
-//       else if (args[i] == '+' || args[i] == '-')
-//         printf ("%c ", args[i]);
+  for (int i = 0; i < strlen (args); i++)
+    {
+      if ((args[i] == '>') || (args[i] == '<') || (args[i] == '='))
+        {
 
-//       if (args[i] == ')')
-//         return 0;
-//     }
-// }
+          mySign = i;
 
-// char
-// preCalcProcessing (char *args)
-// {
-//   char *ptr = strtok (args, " =");
-//   char val;
-//   sscanf (ptr, "%c", &val);
-//   if (!((val) >= 'A' && (val) <= 'Z'))
-//     {
-//       fprintf (stderr, "NOT CORRECT!\n");
-//       exit (EXIT_FAILURE);
-//     }
-//   ptr = strtok (NULL, " ");
-//   char *eq = ptr;
-//   if (strcmp (eq, "=") != 0)
-//     {
-//       fprintf (stderr, "Wrong expression!\n");
-//       exit (EXIT_FAILURE);
-//     }
-//   ptr = strtok (NULL, "");
-//   char *exp = ptr;
-//   int i = 0;
-//   int pos = 0;
-//   int j = 0;
-//   int operat = 0;
-//   int flg = 1;
-//   int m = 0;
-//   char *assign = (char *)malloc (sizeof (char) * 255);
-//   for (int k = 0; k < strlen (exp); k++)
-//     {
-//       if (exp[k] == '-' && flg)
-//         {
-//           assign[m] = '0';
-//           m++;
-//         }
-//       flg = 0;
-//       if (exp[k] == '+' || exp[k] == '-' || exp[k] == '/' || exp[k] == '*')
-//         {
-//           operat++;
-//         }
-//       if (exp[k] == '+' || exp[k] == '-' || exp[k] == '/' || exp[k] == '*'
-//           || exp[k] == '(')
-//         {
-//           flg = 1;
-//         }
+          if (!(args[i - 1] == ' '))
+            before = 1;
+          if (!(args[i + 1] == ' '))
+            after = 1;
+          break;
+        }
+    }
 
-//       assign[m] = exp[k];
-//       m++;
-//     }
-//   if (operat == 0) // 0+ перед ним, если перед минусом нет аргумента, то
-//   пишем
-//                    // 0 перед миунсом
-//     {
-//       sprintf (exp, "0 + %s", assign);
-//     }
-//   else
-//     {
-//       sprintf (exp, "%s", assign);
-//     }
-//   while (exp[i] != '\n' && exp[i] != '\0')
-//     {
-//       if (exp[i] >= '0' && exp[i] <= '9')
-//         {
-//           char num[256];
-//           j = 0;
-//           num[j] = exp[i];
-//           j++;
-//           pos = i;
-//           exp[i] = ' ';
-//           i++;
-//           while (exp[i] >= '0' && exp[i] <= '9')
-//             {
-//               num[j] = exp[i];
-//               j++;
-//               exp[i] = ' ';
-//               i++;
-//             }
-//           num[j] = '\0';
-//           exp[pos] = intToConstant (atoi (num));
-//         }
-//       i++;
-//     }
-//   sprintf (args, "%s", exp);
+  char *expression = (char *)malloc (sizeof (char) * 255);
+  if (!(before) && !(after))
+    {
+      expression = strtok (args, "");
+    }
+  else
+    {
+      int j = 0;
+      for (int i = 0; i < strlen (args); i++)
+        {
+          if (i == mySign)
+            {
+              if (before)
+                {
+                  expression[j] = ' ';
+                  j++;
+                }
+              expression[j] = args[i];
+              j++;
+              if (after)
+                {
+                  expression[j] = ' ';
+                  j++;
+                }
+            }
+          else
+            {
+              expression[j] = args[i];
+              j++;
+            }
+        }
+      expression[j] = '\0';
+    }
 
-//   return val;
-// }
+  char *ptr = strtok (expression, " ");
+  char *operand1 = ptr;
+  char operand1Name;
+
+  if (strlen (operand1) > 1)
+    {
+      if (atoi (operand1))
+        operand1Name = intToConstant (atoi (operand1));
+    }
+  else
+    {
+      if ((operand1[0] >= '0') && (operand1[0] <= '9'))
+        {
+          operand1Name = intToConstant (atoi (operand1));
+        }
+      else if ((operand1[0] >= 'A') && (operand1[0] <= 'Z'))
+        {
+          operand1Name = operand1[0];
+        }
+      else
+        {
+          erropenfile ("Wrong statement!\n");
+          return -1;
+        }
+    }
+
+  ptr = strtok (NULL, " ");
+  char *logicalSign = ptr;
+
+  ptr = strtok (NULL, " ");
+  char *operand2 = ptr;
+  char operand2Name;
+
+  if (strlen (operand2) > 1)
+    {
+      if (atoi (operand2))
+        operand2Name = intToConstant (atoi (operand2));
+    }
+  else
+    {
+      if ((operand2[0] >= '0') && (operand2[0] <= '9'))
+        operand2Name = intToConstant (atoi (operand2));
+      else if ((operand2[0] >= 'A') && (operand2[0] <= 'Z'))
+        operand2Name = operand2[0];
+      else
+        {
+          erropenfile ("Wrong statement!\n");
+          return -1;
+        }
+    }
+
+  int falsePosition = -1;
+
+  if (logicalSign[0] == '<')
+    {
+      fprintf (tempSA, "%.2i LOAD \t\t%d\n", SBcounter, alloc (operand1Name));
+      SBcounter++;
+      fprintf (tempSA, "%.2i SUB  \t\t\t%d\n", SBcounter,
+               alloc (operand2Name));
+      SBcounter++;
+      fprintf (tempSA, "%.2i JNEG \t\t%d\n", SBcounter, SBcounter + 2);
+      SBcounter++;
+      falsePosition = SBcounter;
+      SBcounter++;
+    }
+  else if (logicalSign[0] == '>')
+    {
+      fprintf (tempSA, "%.2i LOAD \t\t%d\n", SBcounter, alloc (operand2Name));
+      SBcounter++;
+      fprintf (tempSA, "%.2i SUB  \t\t\t%d\n", SBcounter,
+               alloc (operand1Name));
+      SBcounter++;
+      fprintf (tempSA, "%.2i JNEG \t\t%d\n", SBcounter, SBcounter + 2);
+      SBcounter++;
+      falsePosition = SBcounter;
+      SBcounter++;
+    }
+  else if (logicalSign[0] == '=')
+    {
+      fprintf (tempSA, "%.2i LOAD \t\t%d\n", SBcounter, alloc (operand1Name));
+      SBcounter++;
+      fprintf (tempSA, "%.2i SUB  \t\t\t%d\n", SBcounter,
+               alloc (operand2Name));
+      SBcounter++;
+      fprintf (tempSA, "%.2i JZ \t\t%d\n", SBcounter, SBcounter + 2);
+      SBcounter++;
+      falsePosition = SBcounter;
+      SBcounter++;
+    }
+
+  ptr = strtok (NULL, " ");
+  char *command = ptr;
+  ptr = strtok (NULL, "");
+  char *commandArguments = ptr;
+
+  if (strcmp (command, "IF") == 0)
+    {
+      erropenfile ("Multiple IF!\n");
+      return -1;
+    }
+
+  else if (strcmp (command, "GOTO") != 0)
+    function (command, commandArguments);
+  else
+    {
+      gotoCounter++;
+      gotoRecords
+          = realloc (gotoRecords, sizeof (struct command) * gotoCounter + 1);
+      struct command gotoCommand;
+      gotoCommand.Address = SBcounter;
+      char *buff = (char *)malloc (sizeof (char) * 255);
+      sprintf (buff, "%d GOTO %s", falsePosition, commandArguments);
+      gotoCommand.Command = buff;
+      gotoRecords[gotoCounter] = gotoCommand;
+      SBcounter++;
+    }
+
+  fprintf (tempSA, "%.2i JUMP \t\t%d\n", falsePosition, SBcounter);
+  // SBcounter++;
+}
+
+int8_t
+GOTO (int address, int operand)
+{
+  for (int i = 0; i < 100; i++)
+    {
+      if (program[i].Number == operand)
+        {
+          fprintf (tempSA, "%.2i JUMP \t\t%d\n", address, program[i].Address);
+          return 0;
+        }
+    }
+  erropenfile ("Reference to an inspecifed memory location.\n");
+  return -1;
+}
+
+int8_t
+END ()
+{
+  fprintf (tempSA, "%.2i HALT \t\t00\n", SBcounter);
+  SBcounter++;
+}
+
+void
+parsRPN (char *rpn, char *var)
+{
+  int i = 0;
+  int depth = 0;
+  int operand1, operand2;
+  char memoryCounter = '1';
+  while (rpn[i] != '\0' && rpn[i] != '\n')
+    {
+      char x = rpn[i];
+      if ((x >= 'a' && x <= 'z') || x >= 'A' && x <= 'Z')
+        {
+          fprintf (tempSA, "%.2i LOAD \t\t%d\n", SBcounter, alloc (x));
+          SBcounter++;
+          fprintf (tempSA, "%.2i STORE \t\t%d\n", SBcounter,
+                   alloc (memoryCounter));
+          memoryCounter++;
+          SBcounter++;
+          depth++;
+        }
+      if (x == '+' || x == '-' || x == '*' || x == '/')
+        {
+          if (depth < 2)
+            {
+              erropenfile (
+                  "Uncorrect LET statement, check your expression.\n");
+              return;
+            }
+          else
+            {
+              operand1 = alloc (memoryCounter - 2);
+              operand2 = alloc (memoryCounter - 1);
+              fprintf (tempSA, "%.2i LOAD \t\t%d\n", SBcounter,
+                       operand1); //закидываем самый правый операнд в акк
+              SBcounter++;
+              switch (x)
+                {
+                case '+':
+                  fprintf (tempSA, "%.2i ADD \t\t%d\n", SBcounter, operand2);
+                  SBcounter++;
+                  break;
+                case '-': // SUB
+                  fprintf (tempSA, "%.2i SUB \t\t%d\n", SBcounter, operand2);
+                  SBcounter++;
+                  break;
+                case '/': // DIVIDE
+                  fprintf (tempSA, "%.2i DIVIDE \t\t%d\n", SBcounter,
+                           operand2);
+                  SBcounter++;
+                  break;
+                case '*': // MUL
+                  fprintf (tempSA, "%.2i MUL \t\t%d\n", SBcounter, operand2);
+                  SBcounter++;
+                  break;
+                }
+              fprintf (tempSA, "%.2i STORE \t\t%d\n", SBcounter,
+                       alloc (memoryCounter - 2));
+              SBcounter++;
+              depth--;
+              memoryCounter = memoryCounter - 1;
+            }
+        }
+      i++;
+    }
+  if (depth != 1) //??
+    {
+      erropenfile ("Uncorrect LET statement, check your expression.\n");
+      return;
+    }
+  fprintf (tempSA, "%.2i STORE \t\t%d\n", SBcounter, alloc (*var));
+  SBcounter++;
+}
+
+char
+intToConstant (int value)
+{
+  char lastConstantName = 'a';
+  for (int i = 0; i < 52; i++)
+    {
+      if (Variables[i].Name == '\0')
+        {
+          Variables[i].Name = lastConstantName;
+          lastConstantName++;
+          Variables[i].Address = 99 - i;
+          Variables[i].Value = value;
+          fprintf (tempSA, "%.2i = \t\t\t%x\n", Variables[i].Address,
+                   abs (Variables[i].Value));
+          variableCount++;
+          return Variables[i].Name;
+        }
+
+      if (Variables[i].Value != 0)
+        {
+          if (Variables[i].Value == value)
+            {
+              return Variables[i].Name;
+            }
+        }
+    }
+}
+
+char
+preCalcProcessing (char *args)
+{
+  char *ptr = strtok (args, " =");
+  char val;
+  sscanf (ptr, "%c", &val);
+  if (!((val) >= 'A' && (val) <= 'Z'))
+    {
+      erropenfile ("NOT CORRECT!\n");
+      return -1;
+    }
+  ptr = strtok (NULL, " ");
+  char *eq = ptr;
+  if (strcmp (eq, "=") != 0)
+    {
+      erropenfile ("Wrong expression!\n");
+      return -1;
+    }
+  ptr = strtok (NULL, "");
+  char *exp = ptr;
+  int i = 0;
+  int pos = 0;
+  int j = 0;
+  int operat = 0;
+  int flg = 1;
+  int m = 0;
+  char *assign = (char *)malloc (sizeof (char) * 255);
+  for (int k = 0; k < strlen (exp); k++)
+    {
+      if (exp[k] == '-' && flg)
+        {
+          assign[m] = '0';
+          m++;
+        }
+      flg = 0;
+      if (exp[k] == '+' || exp[k] == '-' || exp[k] == '/' || exp[k] == '*')
+        operat++;
+      if (exp[k] == '+' || exp[k] == '-' || exp[k] == '/' || exp[k] == '*'
+          || exp[k] == '(')
+        flg = 1;
+
+      assign[m] = exp[k];
+      m++;
+    }
+  if (operat == 0)
+    sprintf (exp, "0 + %s", assign);
+  else
+    sprintf (exp, "%s", assign);
+  while (exp[i] != '\n' && exp[i] != '\0')
+    {
+      if (exp[i] >= '0' && exp[i] <= '9')
+        {
+          char num[256];
+          j = 0;
+          num[j] = exp[i];
+          j++;
+          pos = i;
+          exp[i] = ' ';
+          i++;
+          while (exp[i] >= '0' && exp[i] <= '9')
+            {
+              num[j] = exp[i];
+              j++;
+              exp[i] = ' ';
+              i++;
+            }
+          num[j] = '\0';
+          exp[pos] = intToConstant (atoi (num));
+        }
+      i++;
+    }
+  sprintf (args, "%s", exp);
+
+  return val;
+}
+
+char *
+translateToRPN (char *inf, char *rpn)
+{
+  // char rpn[255] = "\0";
+  Node *root = NULL;
+  int i = 0;
+  int j = 0;
+  while (inf[i] != '\0' && inf[i] != '\n')
+    {
+      char x = inf[i];
+      if ((x >= 'a' && x <= 'z') || x >= 'A' && x <= 'Z')
+        {
+          rpn[j] = x;
+          j++;
+          // printf("%s\n", rpn);
+        }
+      else if (x == '(')
+        {
+          stack_push (x, &root);
+        }
+      else if (x == ')')
+        {
+          while (stack_top (root) != '(')
+            {
+              char c = stack_pop (&root);
+              if (c != 0)
+                {
+                  rpn[j] = c;
+                  j++;
+                }
+            }
+          stack_pop (&root);
+        }
+      else if (x == '+' || x == '-' || x == '*' || x == '/')
+        {
+          while (root != NULL
+                 && checkPriority (root->data) >= checkPriority (x))
+            {
+              char c = stack_pop (&root);
+              if (c != 0)
+                {
+                  rpn[j] = c;
+                  j++;
+                }
+            }
+          stack_push (x, &root);
+        }
+      else if (x != ' ')
+        {
+          // free(rpn);
+          erropenfile ("Wrong expression!\n");
+          return NULL;
+        }
+      i++;
+    }
+  while (root != NULL)
+    {
+      char c = stack_pop (&root);
+      if (c != 0)
+        {
+          rpn[j] = c;
+          j++;
+        }
+    }
+  for (int k = 0; k < j; k++)
+    {
+      if (rpn[k] == '(' || rpn[k] == ')')
+        {
+          erropenfile ("Check your expression!\n");
+          return NULL;
+        }
+    }
+  rpn[j] = '\0';
+  return rpn;
+}
+
+void
+stack_push (char data, Node **top)
+{
+  Node *tmp = (Node *)malloc (sizeof (Node));
+  tmp->data = data;
+  tmp->next = *top;
+  *top = tmp;
+}
+
+char
+stack_pop (Node **top)
+{
+  Node *tmp;
+  char d;
+  if (*top == NULL)
+    return -1;
+  else
+    {
+      tmp = *top;
+      *top = tmp->next;
+      d = tmp->data;
+      free (tmp);
+      return d;
+    }
+}
+
+char
+stack_top (Node *top)
+{
+  if (top != NULL)
+    return top->data;
+}
+
+int
+checkPriority (char sign)
+{
+  switch (sign)
+    {
+    case '*':
+    case '/':
+      return 4;
+    case '+':
+    case '-':
+      return 2;
+    case '(':
+    case ')':
+      return 1;
+    }
+}
+
+void
+function (char *command, char *args)
+{
+
+  if (strcmp (command, "REM") == 0)
+    ;
+  else if (strcmp (command, "INPUT") == 0)
+    INPUT (args);
+  else if (strcmp (command, "PRINT") == 0)
+    PRINT (args);
+  else if (strcmp (command, "IF") == 0)
+    IF (args);
+  else if (strcmp (command, "LET") == 0)
+    LET (args);
+  else if (strcmp (command, "END") == 0)
+    END ();
+  else
+    erropenfile ("Unknown  command.\n");
+}

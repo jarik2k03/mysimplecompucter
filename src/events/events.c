@@ -125,13 +125,15 @@ sat_event ()
   write (0, "Выберите файл для компиляции: ", 56);
   read (0, request, 30);
   request[strlen (request) - 1] = '\0';
-  if (read_program (request) == -1)
+  if (sa_read_program (request) == -1)
     {
       input_eraser (50);
       mainpos_cursor ();
       free (request);
+      return;
     }
-  write_program (request);
+  sa_write_program (request);
+  mainpos_cursor ();
 }
 
 void
@@ -149,8 +151,13 @@ sbt_event ()
       input_eraser (50);
       mainpos_cursor ();
       free (request);
+      return;
     }
-  sb_write_program (request);
+  if (sb_write_program (request) != -1)
+    {
+      sa_write_program ("translated.sa");
+    }
+  free (request);
   mainpos_cursor ();
 }
 

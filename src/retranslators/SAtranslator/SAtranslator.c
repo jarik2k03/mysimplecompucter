@@ -11,9 +11,9 @@ struct bstree *commands = NULL;
 int *tempmem = NULL;
 
 int8_t
-read_program (char *in)
+sa_read_program (char *in)
 {
-  if (check_filename (in) == -1)
+  if (sa_check_filename (in) == -1)
     {
       erropenfile ("Принимаются только *.sa файлы!");
       return -1;
@@ -30,11 +30,11 @@ read_program (char *in)
   int16_t num, operand;
 
   char line[120];
-  init_commands ();
+  sa_init_commands ();
   while (!feof (SAprog))
     {
       fgets (line, 120, SAprog);
-      if (string_check (line, &num, command, &operand) == -1)
+      if (sa_string_check (line, &num, command, &operand) == -1)
         return -1;
     }
 
@@ -43,9 +43,9 @@ read_program (char *in)
 }
 
 int8_t
-write_program (char *in)
+sa_write_program (char *in)
 {
-  if (check_filename (in) == -1)
+  if (sa_check_filename (in) == -1)
     {
       erropenfile ("Принимаются только *.sa файлы!");
       return -1;
@@ -67,17 +67,17 @@ write_program (char *in)
     {
       fgets (line, 120, SAprog);
       sscanf (line, "%hd %s %hd", &num, command, &operand);
-      write_to_memory (&num, command, &operand);
+      sa_write_to_memory (&num, command, &operand);
     }
 
-  save_memory (in);
+  sa_save_memory (in);
   fclose (SAprog);
   free (tempmem);
   return 0;
 }
 
 int8_t
-check_filename (char *in)
+sa_check_filename (char *in)
 {
   uint8_t ext = strlen (in) - 3;
   char exp_in[] = ".sa";
@@ -89,7 +89,7 @@ check_filename (char *in)
 }
 
 int8_t
-save_memory (char *in)
+sa_save_memory (char *in)
 {
   uint8_t ext = strlen (in) - 3;
   char o[] = ".o";
@@ -106,7 +106,7 @@ save_memory (char *in)
 }
 
 int8_t
-write_to_memory (int16_t *num, char *command, int16_t *operand)
+sa_write_to_memory (int16_t *num, char *command, int16_t *operand)
 {
   int32_t value;
 
@@ -123,18 +123,18 @@ write_to_memory (int16_t *num, char *command, int16_t *operand)
 }
 
 int8_t
-string_check (char *str, int16_t *num, char *command, int16_t *operand)
+sa_string_check (char *str, int16_t *num, char *command, int16_t *operand)
 {
   char *comment = calloc (100, sizeof (char));
   sscanf (str, "%hd %s %hd %[^\n]s ", num, command, operand, comment);
   int8_t returns = 0;
-  if (cell_check (*num) == -1)
+  if (sa_cell_check (*num) == -1)
     returns = -1;
-  else if (command_check (command) == -1)
+  else if (sa_command_check (command) == -1)
     returns = -1;
-  else if (operand_check (*operand, command) == -1)
+  else if (sa_operand_check (*operand, command) == -1)
     returns = -1;
-  else if (comment_check (comment) == -1)
+  else if (sa_comment_check (comment) == -1)
     returns = -1;
 
   // printf ("\n%hd: %s %hd %s  ", *num, command, *operand, comment);
@@ -143,7 +143,7 @@ string_check (char *str, int16_t *num, char *command, int16_t *operand)
 }
 
 int8_t
-comment_check (char *com)
+sa_comment_check (char *com)
 {
   int8_t a = 1, b = strlen (com) - 1;
   if (b < 0) // пустой комментарий
@@ -157,7 +157,7 @@ comment_check (char *com)
 }
 
 int8_t
-command_check (char *command)
+sa_command_check (char *command)
 {
   struct bstree *lookup = bstree_lookup (commands, command);
   if (lookup == NULL)
@@ -169,7 +169,7 @@ command_check (char *command)
 }
 
 int8_t
-cell_check (int16_t num)
+sa_cell_check (int16_t num)
 {
   if (num < 0 || num > 99)
     {
@@ -180,7 +180,7 @@ cell_check (int16_t num)
 }
 
 int8_t
-operand_check (int16_t operand, char *command)
+sa_operand_check (int16_t operand, char *command)
 {
   struct bstree *lookup = bstree_lookup (commands, command);
   if (operand > 127 && lookup->value != 0)
@@ -192,7 +192,7 @@ operand_check (int16_t operand, char *command)
 }
 
 int8_t
-init_commands ()
+sa_init_commands ()
 {
   if (commands != NULL)
     return 0;

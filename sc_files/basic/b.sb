@@ -1,6 +1,6 @@
 1 INPUT A
 2 INPUT B
-40 LET C = (A - B) * A + (A / (B + A))
+40 LET C = (A - B)
 41 INPUT B
 50 IF C < 0 GOTO 20
 60 PRINT B
