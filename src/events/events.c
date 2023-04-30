@@ -7,6 +7,7 @@
 #include <mySimpleComputer/mySimpleComputer.h>
 #include <myTerm/myTerm.h>
 #include <retranslators/SAtranslator/SAtranslator.h>
+#include <retranslators/SBtranslator/SBtranslator.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -119,14 +120,12 @@ void
 sat_event ()
 {
   char *request = malloc (30 * sizeof (char));
-  int8_t check;
   rk_mytermregime (1, 0, 1, 1, 1);
   mt_gotoXY (28, 1);
   write (0, "Выберите файл для компиляции: ", 56);
   read (0, request, 30);
   request[strlen (request) - 1] = '\0';
-  check = read_program (request);
-  if (check == -1)
+  if (read_program (request) == -1)
     {
       input_eraser (50);
       mainpos_cursor ();
@@ -139,20 +138,19 @@ void
 sbt_event ()
 {
   char *request = malloc (30 * sizeof (char));
-  int8_t check;
   rk_mytermregime (1, 0, 1, 1, 1);
   mt_gotoXY (28, 1);
   write (1, "Выберите файл для компиляции: ", 56);
   read (0, request, 30);
   request[strlen (request) - 1] = '\0';
-  check = read_program (request);
-  if (check == -1)
+
+  if (sb_read_program (request) == -1)
     {
       input_eraser (50);
       mainpos_cursor ();
       free (request);
     }
-  // write_program (request);
+  sb_write_program (request);
   mainpos_cursor ();
 }
 

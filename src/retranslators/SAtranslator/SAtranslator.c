@@ -38,6 +38,7 @@ read_program (char *in)
         return -1;
     }
 
+  fclose (SAprog);
   return 0;
 }
 
@@ -72,6 +73,7 @@ write_program (char *in)
   save_memory (in);
   fclose (SAprog);
   free (tempmem);
+  return 0;
 }
 
 int8_t
