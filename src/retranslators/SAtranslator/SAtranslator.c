@@ -189,7 +189,7 @@ sa_init_commands ()
 {
   if (commands != NULL)
     return 0;
-  FILE *saved_commands = fopen ("commands.txt", "r+");
+  FILE *saved_commands = fopen ("sc_files/commands.txt", "r+");
   if (saved_commands == NULL)
     {
       erropenfile ("Не удалось найти словарь!");
