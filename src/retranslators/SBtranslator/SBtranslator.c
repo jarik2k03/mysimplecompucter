@@ -29,11 +29,8 @@ sb_read_program (char *in)
       erropenfile ("Принимаются только *.sb файлы!");
       return -1;
     }
-  char path1[] = "sc_files/basic/";
+  char path1[50] = "sc_files/basic/";
   strcat (path1, in);
-
-  if (tempSA == NULL)
-    tempSA = fopen ("sc_files/assembler/translated.sa", "a+");
 
   FILE *SBprog = fopen (path1, "r+");
 
@@ -50,6 +47,7 @@ sb_read_program (char *in)
       if (sb_string_check (line) == -1)
         return -1;
     }
+  lastnum = 0;
   fclose (SBprog);
   return 0;
 }
@@ -62,18 +60,20 @@ sb_write_program (char *in)
       erropenfile ("Принимаются только *.sb файлы!");
       return -1;
     }
-
-  char path1[] = "sc_files/basic/";
+  char path1[50] = "sc_files/basic/";
+  char path2[50] = "sc_files/assembler/";
   strcat (path1, in);
+  strcat (path2, in);
+  path2[strlen (path2) - 1] = 'a';
 
   if (tempSA == NULL)
-    tempSA = fopen ("sc_files/assembler/treanslated.sa", "a+");
+    tempSA = fopen (path2, "a+");
 
   FILE *SBprog = fopen (path1, "r+");
 
   if (SBprog == NULL)
     {
-      erropenfile ("Указанный файл не найден.");
+      erropenfile ("Указанный файл не найден!");
       return -1;
     }
   char command[8];
@@ -91,9 +91,10 @@ sb_write_program (char *in)
     }
   fclose (SBprog);
   fclose (tempSA);
+  tempSA = NULL;
+  variableCount = 0;
   return 0;
 }
-
 int8_t
 sb_write (int16_t num, char *command, char *args)
 {

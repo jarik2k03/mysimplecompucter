@@ -10,4 +10,5 @@ JUMP    40
 JNEG    41
 JZ      42
 HALT    43
+OR      53
 XOR     54

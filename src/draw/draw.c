@@ -47,7 +47,7 @@ print_hints ()
   mt_gotoXY (x++, y);
   printf ("F6\t- instructionCounter");
   mt_gotoXY (x++, y);
-  printf ("F7\t- SA retranslator");
+  printf ("F7\t- SB retranslator");
 }
 void
 display_bigchar (int value, int x, int shift)
@@ -127,6 +127,10 @@ print_interface ()
   draw_frame (63, 10, 90, 11, "Flags");
   draw_frame (1, 13, 45, 21, "");
   draw_frame (47, 13, 90, 21, "Keys:  ");
+  draw_frame (1, 23, 90, 24, "Execution requests");
+  draw_frame (1, 25, 90, 30, "History");
+  draw_frame (1, 32, 90, 33, "");
+
   print_hints ();
 }
 
@@ -150,21 +154,54 @@ print_cell (int16_t address, int32_t value, int16_t command, int16_t operand)
 }
 
 void
+print_ccell (int16_t address, int32_t value)
+{
+  int row, col;
+  char *buf = malloc (7 * sizeof (char));
+
+  row = address / 10;
+  col = address % 10;
+
+  snprintf (buf, 7, "%c%04X\n", (value & 0x4000) ? '-' : '+', value);
+
+  mt_gotoXY (2 + row, 2 + col * 6);
+  write (1, buf, 5);
+
+  free (buf);
+  return;
+}
+
+void
 erropenfile (char *message)
 {
-  mt_gotoXY (28, 1);
+  input_cursor ();
   mt_setbgcolor (red);
-  write (0, message, strlen (message) + 1);
+  write (0, message, 60);
   mt_setbgcolor (darkgrey);
   sleep (1);
+  input_cursor ();
   input_eraser (strlen (message));
-  mt_gotoXY (28, 1);
 }
 
 void
 mainpos_cursor ()
 {
-  mt_gotoXY (26, 1);
+  mt_gotoXY (24, 2);
+}
+
+void
+input_cursor ()
+{
+  mt_gotoXY (33, 2);
+}
+
+void
+hist_cursor (int8_t hcounter)
+{
+  int8_t curlist = (hcounter % 5) + 26;
+  mt_gotoXY (curlist, 2);
+  hist_eraser (70);
+  mt_gotoXY (curlist, 2);
 }
 
 void
@@ -173,8 +210,28 @@ input_eraser (int length)
   char *buffer = malloc (length * sizeof (char));
   for (int i = 0; i < length; i++)
     *(buffer + i) = ' ';
+  input_cursor ();
+  write (0, buffer, length);
+  free (buffer);
+}
 
-  mt_gotoXY (28, 1);
+void
+mainpos_eraser (int length)
+{
+  char *buffer = malloc (length * sizeof (char));
+  for (int i = 0; i < length; i++)
+    *(buffer + i) = ' ';
+  mainpos_cursor ();
+  write (0, buffer, length);
+  free (buffer);
+}
+
+void
+hist_eraser (int length)
+{
+  char *buffer = malloc (length * sizeof (char));
+  for (int i = 0; i < length; i++)
+    *(buffer + i) = ' ';
   write (0, buffer, length);
   free (buffer);
 }

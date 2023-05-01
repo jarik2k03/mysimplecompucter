@@ -102,7 +102,7 @@ counter_event ()
 {
   int buffer;
   rk_mytermregime (0, 0, 1, 1, 1);
-  mt_gotoXY (28, 1);
+  input_cursor ();
   write (0, "Set counter: ", 14);
 
   scanf ("%x", &buffer);
@@ -117,11 +117,30 @@ counter_event ()
 }
 
 void
+enter_event ()
+{
+  int buffer;
+  rk_mytermregime (0, 0, 1, 1, 1);
+  input_cursor ();
+  write (0, "Задайте значение текущей ячейке: ", 62);
+
+  scanf ("%x", &buffer);
+
+  if (buffer < 0xffff && buffer >= 0)
+    {
+      sc_memorySet (current, buffer);
+      decode_and_print (current);
+    }
+  input_eraser (50);
+  mainpos_cursor ();
+}
+
+void
 sat_event ()
 {
   char *request = malloc (30 * sizeof (char));
   rk_mytermregime (1, 0, 1, 1, 1);
-  mt_gotoXY (28, 1);
+  input_cursor ();
   write (0, "Выберите файл для компиляции: ", 56);
   read (0, request, 30);
   request[strlen (request) - 1] = '\0';
@@ -133,6 +152,8 @@ sat_event ()
       return;
     }
   sa_write_program (request);
+  free (request);
+  input_eraser (50);
   mainpos_cursor ();
 }
 
@@ -141,7 +162,7 @@ sbt_event ()
 {
   char *request = malloc (30 * sizeof (char));
   rk_mytermregime (1, 0, 1, 1, 1);
-  mt_gotoXY (28, 1);
+  input_cursor ();
   write (1, "Выберите файл для компиляции: ", 56);
   read (0, request, 30);
   request[strlen (request) - 1] = '\0';
@@ -153,11 +174,12 @@ sbt_event ()
       free (request);
       return;
     }
-  if (sb_write_program (request) != -1)
+  if (sb_write_program (request) != -1 && sa_read_program (request) != -1)
     {
-      sa_write_program ("translated.sa");
+      sa_write_program (request);
     }
   free (request);
+  input_eraser (50);
   mainpos_cursor ();
 }
 
@@ -203,7 +225,7 @@ saveload_event (enum keys *k)
 {
   char *filename = malloc (30 * sizeof (char));
   rk_mytermregime (1, 0, 1, 1, 1);
-  mt_gotoXY (28, 1);
+  input_cursor ();
   if (*k == save)
     write (0, "Save to: ", 10);
   else if (*k == load)
@@ -235,7 +257,7 @@ accumulator_event ()
 {
   int buffer;
   rk_mytermregime (0, 0, 1, 1, 1);
-  mt_gotoXY (28, 1);
+  input_cursor ();
   write (0, "Set accumulator: ", 18);
 
   scanf ("%x", &buffer);
@@ -294,15 +316,19 @@ run_event ()
   int oldcell = current;
   int command, operand;
 
-  sc_regGet (ticks, &ignore); // 4 - ignore N
-  if (ignore == 1)
-    return;
   current = counter;
   decode_and_print (oldcell);
   signal (SIGALRM, *CU);
 
   for (;;)
     {
+      sc_regGet (ticks, &ignore); // 4 - ignore N
+      if (ignore == 1)
+        {
+          alarm (0);
+          return;
+        }
+
       if (sc_memoryGet (counter, &value) == -1
           || sc_commandDecode (value, &command, &operand) != 0)
         {
@@ -350,6 +376,8 @@ event_listener (enum keys *k)
     run_event (k);
   else if (*k == step)
     step_event ();
+  else if (*k == enter)
+    enter_event ();
   else if (*k == quit)
     quit_event (k);
 }

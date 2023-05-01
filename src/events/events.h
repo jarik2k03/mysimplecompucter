@@ -17,4 +17,5 @@ void all_events ();
 void quit_event ();
 void run_event ();
 void step_event ();
+void enter_event ();
 void event_listener (enum keys *k);

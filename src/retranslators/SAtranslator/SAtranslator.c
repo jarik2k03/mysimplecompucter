@@ -13,13 +13,9 @@ int *tempmem = NULL;
 int8_t
 sa_read_program (char *in)
 {
-  if (sa_check_filename (in) == -1)
-    {
-      erropenfile ("Принимаются только *.sa файлы!");
-      return -1;
-    }
-  char path[] = "sc_files/assembler/";
+  char path[50] = "sc_files/assembler/";
   strcat (path, in);
+  path[strlen (path) - 1] = 'a';
   FILE *SAprog = fopen (path, "r+");
   if (SAprog == NULL)
     {
@@ -45,13 +41,9 @@ sa_read_program (char *in)
 int8_t
 sa_write_program (char *in)
 {
-  if (sa_check_filename (in) == -1)
-    {
-      erropenfile ("Принимаются только *.sa файлы!");
-      return -1;
-    }
-  char path[] = "sc_files/assembler/";
+  char path[50] = "sc_files/assembler/";
   strcat (path, in);
+  path[strlen (path) - 1] = 'a';
   FILE *SAprog = fopen (path, "r+");
   if (SAprog == NULL)
     {
@@ -73,6 +65,7 @@ sa_write_program (char *in)
   sa_save_memory (in);
   fclose (SAprog);
   free (tempmem);
+  tempmem = NULL;
   return 0;
 }
 
