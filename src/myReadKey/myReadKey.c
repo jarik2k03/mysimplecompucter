@@ -1,8 +1,7 @@
 #include "myReadKey.h"
 
 #include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <malloc.h>
 #include <string.h>
 #include <termios.h>
 #include <unistd.h>
@@ -13,6 +12,7 @@
 #define TERMINAL_PATH "/dev/tty"
 
 #define KEYS "lsrti"
+#define F7_KEY "\033[18~"
 #define F5_KEY "\033[15~"
 #define F6_KEY "\033[17~"
 #define DOWN_KEY "\033[B"
@@ -20,7 +20,7 @@
 #define LEFT_KEY "\033[D"
 #define RIGHT_KEY "\033[C"
 #define ENTER_KEY '\n'
-#define CANCEL_KEY "\033X"
+#define QUIT_KEY "\033"
 
 int
 rk_readkey (enum keys *k)
@@ -48,6 +48,8 @@ rk_readkey (enum keys *k)
     *k = reset;
   else if (*buffer == '\n')
     *k = enter;
+  else if (strncmp (buffer, F7_KEY, 4) == 0)
+    *k = f7;
   else if (strncmp (buffer, F5_KEY, 4) == 0)
     *k = f5;
   else if (strncmp (buffer, F6_KEY, 4) == 0)
@@ -60,8 +62,8 @@ rk_readkey (enum keys *k)
     *k = left;
   else if (strncmp (buffer, RIGHT_KEY, 3) == 0)
     *k = right;
-  else if (strncmp (buffer, CANCEL_KEY, 2) == 0)
-    *k = cancel;
+  else if (*buffer == '\033')
+    *k = quit;
   else
     *k = etc;
 

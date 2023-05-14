@@ -16,8 +16,9 @@ enum keys
   left,
   right,
   enter,
-  etc,
-  cancel
+  f7,
+  quit,
+  etc
 };
 
 int rk_readkey (enum keys *k);

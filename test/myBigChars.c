@@ -1,5 +1,4 @@
 #include <myBigChars/myBigChars.h>
-#include <myTerm/myTerm.h>
 
 #include "../thirdparty/ctest.h"
 #define SUCCESS 0
@@ -8,7 +7,7 @@
 CTEST (chars, printA)
 {
   int expCode = SUCCESS;
-  int curCode = bc_printA ("klqw");
+  int curCode = bc_printA ('k');
   ASSERT_EQUAL (expCode, curCode);
 }
 

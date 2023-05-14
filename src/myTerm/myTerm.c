@@ -2,16 +2,11 @@
 
 #include <fcntl.h>
 #include <inttypes.h>
+#include <malloc.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
 #define TERMINAL_PATH "/dev/tty"
-#define RAM 100
-#define NULLBIT 0x0
-#define BIT 0x1
-#define MASK 0x7f
-#define BUFSIZE 15
 #define CLEAR "\033[H\033[2J"
 #define FGCOLOR "\033[0;38m"
 #define BGCOLOR "\033[0;48m"

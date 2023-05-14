@@ -4,6 +4,11 @@ COMP = mySimpleComputer
 CHAR = myBigChars
 KEYS = myReadKey
 DRAW = draw
+EVNT = events
+DVCS = devices
+SATR = SAtranslator
+SBTR = SBtranslator
+TREE = bstree
 
 TEST = test
 TESTCOMP = testmySimpleComputer
@@ -12,8 +17,9 @@ TESTCHAR = testmyBigChars
 TESTKEYS = testmyReadKey
 DEBUG = -g3 -O0
 MD = mkdir
+LIBS = -l$(COMP) -l$(TERM) -l$(CHAR) -l$(KEYS) -l$(DRAW) -l$(EVNT) -l$(DVCS) -l$(SATR) -l$(SBTR) -l$(TREE)
 
-CFLAGS =  -Werror -Wcomments -Wdeprecated -Wno-pragmas -Wstrict-overflow=5 -Wchar-subscripts -Wmultistatement-macros -Wparentheses -Warray-bounds=2 -fdiagnostics-show-option
+#CFLAGS =  -Wall -Wextra -Werror
 CPPFLAGS = -I src -MP -MMD
 GCC = gcc
 BIN = bin
@@ -22,13 +28,18 @@ SRC = src
 C = c
 
 # main
-MAIN_EXE = $(BIN)/$(MAIN).exe
+MAIN_EXE = $(MAIN).exe
 # статические либы.
-TERM_LIB = $(OBJ)/$(SRC)/$(TERM)/lib$(TERM).a
-COMP_LIB = $(OBJ)/$(SRC)/$(COMP)/lib$(COMP).a
-CHAR_LIB = $(OBJ)/$(SRC)/$(CHAR)/lib$(CHAR).a
-KEYS_LIB = $(OBJ)/$(SRC)/$(KEYS)/lib$(KEYS).a
-DRAW_LIB = $(OBJ)/$(SRC)/$(DRAW)/lib$(DRAW).a
+TERM_LIB = $(OBJ)/$(SRC)/lib$(TERM).a
+COMP_LIB = $(OBJ)/$(SRC)/lib$(COMP).a
+CHAR_LIB = $(OBJ)/$(SRC)/lib$(CHAR).a
+KEYS_LIB = $(OBJ)/$(SRC)/lib$(KEYS).a
+DRAW_LIB = $(OBJ)/$(SRC)/lib$(DRAW).a
+EVNT_LIB = $(OBJ)/$(SRC)/lib$(EVNT).a
+DVCS_LIB = $(OBJ)/$(SRC)/lib$(DVCS).a
+SATR_LIB = $(OBJ)/$(SRC)/lib$(SATR).a
+SBTR_LIB = $(OBJ)/$(SRC)/lib$(SBTR).a
+TREE_LIB = $(OBJ)/$(SRC)/lib$(TREE).a
 # тесты.
 TESTCOMP_EXE = $(BIN)/$(TESTCOMP).exe
 TESTTERM_EXE = $(BIN)/$(TESTTERM).exe
@@ -53,6 +64,21 @@ KEYS_OBJECTS = $(KEYS_SOURCES:$(SRC)/%.$(C)=$(OBJ)/$(SRC)/%.o)
 DRAW_SOURCES = $(shell find $(SRC)/$(DRAW) -name '*.$(C)')
 DRAW_OBJECTS = $(DRAW_SOURCES:$(SRC)/%.$(C)=$(OBJ)/$(SRC)/%.o)
 
+EVNT_SOURCES = $(shell find $(SRC)/$(EVNT) -name '*.$(C)')
+EVNT_OBJECTS = $(EVNT_SOURCES:$(SRC)/%.$(C)=$(OBJ)/$(SRC)/%.o)
+
+DVCS_SOURCES = $(shell find $(SRC)/$(DVCS) -name '*.$(C)')
+DVCS_OBJECTS = $(DVCS_SOURCES:$(SRC)/%.$(C)=$(OBJ)/$(SRC)/%.o)
+
+TREE_SOURCES = $(shell find $(SRC)/$(TREE) -name '*.$(C)')
+TREE_OBJECTS = $(TREE_SOURCES:$(SRC)/%.$(C)=$(OBJ)/$(SRC)/%.o)
+
+SATR_SOURCES = $(shell find $(SRC)/retranslators/$(SATR) -name '*.$(C)')
+SATR_OBJECTS = $(SATR_SOURCES:$(SRC)/retranslators/%.$(C)=$(OBJ)/$(SRC)/retranslators/%.o)
+
+SBTR_SOURCES = $(shell find $(SRC)/retranslators/$(SBTR) -name '*.$(C)')
+SBTR_OBJECTS = $(SBTR_SOURCES:$(SRC)/retranslators/%.$(C)=$(OBJ)/$(SRC)/retranslators/%.o)
+
 TESTCOMP_SOURCES = $(TEST)/$(MAIN).$(C) $(TEST)/$(COMP).$(C)
 TESTCOMP_OBJECTS = $(TESTCOMP_SOURCES:$(TEST)/%.c=$(OBJ)/$(TEST)/%.o)
 
@@ -67,72 +93,107 @@ TESTKEYS_OBJECTS = $(TESTKEYS_SOURCES:$(TEST)/%.c=$(OBJ)/$(TEST)/%.o)
 
 # создание объектных файлов.
 $(OBJ)/%.o: %.c
+	@echo "\r\033[0;36m\r"
 	$(GCC) $(CFLAGS) $(DEBUG) $(CPPFLAGS) -c -o $@ $<
 
 # make (Первая зависимость - выполняет всё.)
 .PHONY: $(MAIN) 
-$(MAIN): $(MD) $(MAIN_EXE) $(TESTCOMP) $(TESTTERM) $(TESTCHAR) $(TESTKEYS)
+$(MAIN): $(MD) $(MAIN_EXE) tests
 
-# make all - компиляция и запуск в одной команде!
+# make all - форматирование, компиляция и запуск в одной команде!
 .PHONY: all
-all: $(MAIN) run
-
+all: format $(MAIN) run
 
 # добавление папок для бинарников (bin & obj)
 .PHONY: $(MD)
 mkdir:
-	[ -d $(BIN) ] || mkdir $(BIN)
-	[ -d $(OBJ) ] || mkdir $(OBJ)
-	[ -d $(OBJ)/$(SRC) ] || mkdir $(OBJ)/$(SRC)
-	[ -d $(OBJ)/$(SRC)/$(TERM) ] || mkdir $(OBJ)/$(SRC)/$(TERM)
-	[ -d $(OBJ)/$(SRC)/$(CHAR) ] || mkdir $(OBJ)/$(SRC)/$(CHAR)
-	[ -d $(OBJ)/$(SRC)/$(COMP) ] || mkdir $(OBJ)/$(SRC)/$(COMP)
-	[ -d $(OBJ)/$(SRC)/$(KEYS) ] || mkdir $(OBJ)/$(SRC)/$(KEYS)
-	[ -d $(OBJ)/$(SRC)/$(MAIN) ] || mkdir $(OBJ)/$(SRC)/$(MAIN)
-	[ -d $(OBJ)/$(SRC)/$(DRAW) ] || mkdir $(OBJ)/$(SRC)/$(DRAW)
-	[ -d $(OBJ)/$(TEST) ] || mkdir $(OBJ)/$(TEST)
-
+	@echo "\033[1;35m----СОЗДАНИЕ ПАПОК----"
+	mkdir -p $(BIN)
+	mkdir -p $(OBJ)/$(TEST)
+	mkdir -p $(OBJ)/$(SRC)/$(TERM)
+	mkdir -p $(OBJ)/$(SRC)/$(CHAR)
+	mkdir -p $(OBJ)/$(SRC)/$(COMP)
+	mkdir -p $(OBJ)/$(SRC)/$(KEYS)
+	mkdir -p $(OBJ)/$(SRC)/$(MAIN)
+	mkdir -p $(OBJ)/$(SRC)/$(DRAW)
+	mkdir -p $(OBJ)/$(SRC)/$(EVNT)
+	mkdir -p $(OBJ)/$(SRC)/$(DVCS)
+	mkdir -p $(OBJ)/$(SRC)/$(TREE)
+	mkdir -p $(OBJ)/$(SRC)/retranslators/$(SATR)
+	mkdir -p $(OBJ)/$(SRC)/retranslators/$(SBTR)
+	
 # сборка программы со всеми библиотеками.
-$(MAIN_EXE): $(MAIN_OBJECTS) $(COMP_LIB) $(CHAR_LIB) $(KEYS_LIB) $(DRAW_LIB) $(TERM_LIB)
-	$(GCC) $(CFLAGS) $(DEBUG) $(CPPFLAGS) -o $@ $^ -l$(COMP) -L$(OBJ)/$(SRC)/$(COMP) -l$(TERM) -L$(OBJ)/$(SRC)/$(TERM) -l$(CHAR) -L$(OBJ)/$(SRC)/$(CHAR) -l$(KEYS) -L$(OBJ)/$(SRC)/$(KEYS) -l$(DRAW) -L$(OBJ)/$(SRC)/$(DRAW)
+$(MAIN_EXE): $(MAIN_OBJECTS) $(COMP_LIB) $(TERM_LIB) $(CHAR_LIB) $(KEYS_LIB) $(DRAW_LIB) $(EVNT_LIB) $(DVCS_LIB) $(SATR_LIB) $(SBTR_LIB) $(TREE_LIB)
+	@echo "\033[1;31m----СБОРКА КОМПЬЮТЕРА----"
+	$(GCC) $(CFLAGS) $(DEBUG) $(CPPFLAGS) -o $@ $< obj/src/libdraw.a -L$(OBJ)/$(SRC) $(LIBS)
 
 # создание статических библиотек.
 $(COMP_LIB): $(COMP_OBJECTS)
+	@echo -n "\r\033[0;33m\r"
 	ar rcs $@ $^
 $(TERM_LIB): $(TERM_OBJECTS)
+	@echo -n "\r\033[0;33m\r"
 	ar rcs $@ $^
 $(CHAR_LIB): $(CHAR_OBJECTS)
+	@echo -n "\r\033[0;33m\r"
 	ar rcs $@ $^	
 $(KEYS_LIB): $(KEYS_OBJECTS)
+	@echo -n "\r\033[0;33m\r" 
 	ar rcs $@ $^	
 $(DRAW_LIB): $(DRAW_OBJECTS)
+	@echo -n "\r\033[0;33m\r"
 	ar rcs $@ $^	
+$(EVNT_LIB): $(EVNT_OBJECTS)
+	@echo -n "\r\033[0;33m\r"
+	ar rcs $@ $^	
+$(DVCS_LIB): $(DVCS_OBJECTS)
+	@echo -n "\r\033[0;33m\r"
+	ar rcs $@ $^
+$(SATR_LIB): $(SATR_OBJECTS)
+	@echo -n "\r\033[0;33m\r"
+	ar rcs $@ $^	
+$(SBTR_LIB): $(SBTR_OBJECTS)
+	@echo -n "\r\033[0;33m\r"
+	ar rcs $@ $^	
+$(TREE_LIB): $(TREE_OBJECTS)
+	@echo -n "\r\033[0;33m\r"
+	ar rcs $@ $^	
+	
 
+.PHONY: tests
+tests: $(TESTCOMP) $(TESTTERM) $(TESTCHAR) $(TESTKEYS)
 # сборка тестов 1лабы.
 .PHONY: $(TESTCOMP)
 $(TESTCOMP): $(TESTCOMP_EXE)
-$(TESTCOMP_EXE): $(TESTCOMP_OBJECTS) $(COMP_LIB)
-	$(GCC) $(CFLAGS) $(DEBUG) $(CPPFLAGS) -o $@ $^
+$(TESTCOMP_EXE): $(TESTCOMP_OBJECTS)
+	@echo "\033[1;31m----СБОРКА ТЕСТОВ mySimpleComputer----"
+	$(GCC) $(CFLAGS) $(DEBUG) $(CPPFLAGS) -o $@ $^ -L$(OBJ)/$(SRC) -l$(COMP) 
 # сборка тестов 2лабы.
 .PHONY: $(TESTTERM)
 $(TESTTERM): $(TESTTERM_EXE)
-$(TESTTERM_EXE): $(TESTTERM_OBJECTS) $(TERM_LIB)
-	$(GCC) $(CFLAGS) $(DEBUG) $(CPPFLAGS) -o $@ $^
+$(TESTTERM_EXE): $(TESTTERM_OBJECTS)
+	@echo "\033[1;31m----СБОРКА ТЕСТОВ myTerm----"
+	$(GCC) $(CFLAGS) $(DEBUG) $(CPPFLAGS) -o $@ $^ -L$(OBJ)/$(SRC) -l$(TERM) 
 # сборка тестов 3лабы.
 .PHONY: $(TESTCHAR)
 $(TESTCHAR): $(TESTCHAR_EXE)
-$(TESTCHAR_EXE): $(TESTCHAR_OBJECTS) $(CHAR_LIB) $(TERM_LIB)
-	$(GCC) $(CFLAGS) $(DEBUG) $(CPPFLAGS) -o $@ $^
+$(TESTCHAR_EXE): $(TESTCHAR_OBJECTS)
+	@echo "\033[1;31m----СБОРКА ТЕСТОВ myBigChars----"
+	$(GCC) $(CFLAGS) $(DEBUG) $(CPPFLAGS) -o $@ $^ -L$(OBJ)/$(SRC) -l$(CHAR) -l$(TERM)
 # сборка тестов 4лабы.
 .PHONY: $(TESTKEYS)
 $(TESTKEYS): $(TESTKEYS_EXE)
-$(TESTKEYS_EXE): $(TESTKEYS_OBJECTS) $(KEYS_LIB)
-	$(GCC) $(CFLAGS) $(DEBUG) $(CPPFLAGS) -o $@ $^
-
-
+$(TESTKEYS_EXE): $(TESTKEYS_OBJECTS)
+	@echo "\033[1;31m----СБОРКА ТЕСТОВ myReadKey----"
+	$(GCC) $(CFLAGS) $(DEBUG) $(CPPFLAGS) -o $@ $^ -L$(OBJ)/$(SRC) -l$(KEYS) 
 
 .PHONY: clean
 clean:
-	rm -rf $(BIN) $(OBJ)
+	rm -rf $(BIN) $(OBJ) $(MAIN_EXE)
 run:
-	$(MAIN_EXE)
+	./$(MAIN_EXE)
+format:
+	@echo "\033[1;32m----ФОРМАТИРОВАНИЕ ИСХОДНОГО КОДА----"
+	find . -type f -name '*.[ch]' -not -path './thirdparty/*' | xargs clang-format --style GNU -i --verbose
+
+# sc_files/binary/b.o
