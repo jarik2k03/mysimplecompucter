@@ -1,6 +1,6 @@
 #pragma once
 
-int bc_printA (char *str);
+int bc_printA (char str);
 int bc_box (int x1, int y1, int x2, int y2);
 int bc_printNL ();
 int bc_printUB (int len);

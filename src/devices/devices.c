@@ -76,7 +76,7 @@ CU ()
   enum keys next = right; // шажок вправо.
   int value, command, operand;
 
-  if (sc_memoryGet (counter + 1, &value) == -1)
+  if (sc_memoryGet (counter, &value) == -1)
     {
       register_event (memoryfault);
       return;
@@ -202,7 +202,7 @@ JNEG (int operand)
   decode_and_print (counter);
   print_counter ();
   hist_cursor (historyCounter);
-  printf ("JUMP:: совершен переход в ячейку %d.\n", operand);
+  printf ("JNEG:: совершен переход в ячейку %d.\n", operand);
   historyCounter++;
 }
 
@@ -217,7 +217,7 @@ JZ (int operand)
   decode_and_print (counter);
   print_counter ();
   hist_cursor (historyCounter);
-  printf ("JUMP:: совершен переход в ячейку %d.\n", operand);
+  printf ("JZ:: совершен переход в ячейку %d.\n", operand);
   historyCounter++;
 }
 

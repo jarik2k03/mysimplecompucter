@@ -189,9 +189,11 @@ $(TESTKEYS_EXE): $(TESTKEYS_OBJECTS)
 
 .PHONY: clean
 clean:
-	rm -rf $(BIN) $(OBJ)
+	rm -rf $(BIN) $(OBJ) $(MAIN_EXE)
 run:
 	./$(MAIN_EXE)
 format:
 	@echo "\033[1;32m----ФОРМАТИРОВАНИЕ ИСХОДНОГО КОДА----"
 	find . -type f -name '*.[ch]' -not -path './thirdparty/*' | xargs clang-format --style GNU -i --verbose
+
+# sc_files/binary/b.o

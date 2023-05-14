@@ -350,7 +350,7 @@ IF (char *args)
       fprintf (tempSA, "%.2i SUB  \t\t\t%d\n", SBcounter,
                alloc (operand2Name));
       SBcounter++;
-      fprintf (tempSA, "%.2i JNEG \t\t%d\n", SBcounter, SBcounter + 2);
+      fprintf (tempSA, "%.2i JNEG \t\t%d\n", SBcounter, SBcounter + 16);
       SBcounter++;
       falsePosition = SBcounter;
       SBcounter++;
@@ -362,7 +362,7 @@ IF (char *args)
       fprintf (tempSA, "%.2i SUB  \t\t\t%d\n", SBcounter,
                alloc (operand1Name));
       SBcounter++;
-      fprintf (tempSA, "%.2i JNEG \t\t%d\n", SBcounter, SBcounter + 2);
+      fprintf (tempSA, "%.2i JNEG \t\t%d\n", SBcounter, SBcounter + 16);
       SBcounter++;
       falsePosition = SBcounter;
       SBcounter++;
@@ -374,7 +374,7 @@ IF (char *args)
       fprintf (tempSA, "%.2i SUB  \t\t\t%d\n", SBcounter,
                alloc (operand2Name));
       SBcounter++;
-      fprintf (tempSA, "%.2i JZ \t\t%d\n", SBcounter, SBcounter + 2);
+      fprintf (tempSA, "%.2i JZ \t\t%d\n", SBcounter, SBcounter + 16);
       SBcounter++;
       falsePosition = SBcounter;
       SBcounter++;
@@ -407,7 +407,8 @@ IF (char *args)
       SBcounter++;
     }
 
-  fprintf (tempSA, "%.2i JUMP \t\t%d\n", falsePosition, SBcounter);
+  fprintf (tempSA, "%.2i JUMP \t\t%d\n", falsePosition + 16,
+           atoi (commandArguments));
   // SBcounter++;
 }
 
@@ -418,7 +419,7 @@ GOTO (int address, int operand)
     {
       if (program[i].Number == operand)
         {
-          fprintf (tempSA, "%.2i JUMP \t\t%d\n", address, program[i].Address);
+          fprintf (tempSA, "%.2i JUMP \t\t%d\n", address, operand);
           return 0;
         }
     }

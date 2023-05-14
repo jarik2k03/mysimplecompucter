@@ -7,7 +7,7 @@
 CTEST (chars, printA)
 {
   int expCode = SUCCESS;
-  int curCode = bc_printA ("klqw");
+  int curCode = bc_printA ('k');
   ASSERT_EQUAL (expCode, curCode);
 }
 
