@@ -9,6 +9,7 @@ DVCS = devices
 SATR = SAtranslator
 SBTR = SBtranslator
 TREE = bstree
+STCK = stack
 
 TEST = test
 TESTCOMP = testmySimpleComputer
@@ -17,7 +18,7 @@ TESTCHAR = testmyBigChars
 TESTKEYS = testmyReadKey
 DEBUG = -g3 -O0
 MD = mkdir
-LIBS = -l$(COMP) -l$(TERM) -l$(CHAR) -l$(KEYS) -l$(DRAW) -l$(EVNT) -l$(DVCS) -l$(SATR) -l$(SBTR) -l$(TREE)
+LIBS = -l$(COMP) -l$(TERM) -l$(CHAR) -l$(KEYS) -l$(DRAW) -l$(EVNT) -l$(DVCS) -l$(SATR) -l$(SBTR) -l$(TREE) -l$(STCK)
 
 #CFLAGS =  -Wall -Wextra -Werror
 CPPFLAGS = -I src -MP -MMD
@@ -40,6 +41,7 @@ DVCS_LIB = $(OBJ)/$(SRC)/lib$(DVCS).a
 SATR_LIB = $(OBJ)/$(SRC)/lib$(SATR).a
 SBTR_LIB = $(OBJ)/$(SRC)/lib$(SBTR).a
 TREE_LIB = $(OBJ)/$(SRC)/lib$(TREE).a
+STCK_LIB = $(OBJ)/$(SRC)/lib$(STCK).a
 # тесты.
 TESTCOMP_EXE = $(BIN)/$(TESTCOMP).exe
 TESTTERM_EXE = $(BIN)/$(TESTTERM).exe
@@ -72,6 +74,9 @@ DVCS_OBJECTS = $(DVCS_SOURCES:$(SRC)/%.$(C)=$(OBJ)/$(SRC)/%.o)
 
 TREE_SOURCES = $(shell find $(SRC)/$(TREE) -name '*.$(C)')
 TREE_OBJECTS = $(TREE_SOURCES:$(SRC)/%.$(C)=$(OBJ)/$(SRC)/%.o)
+
+STCK_SOURCES = $(shell find $(SRC)/$(STCK) -name '*.$(C)')
+STCK_OBJECTS = $(STCK_SOURCES:$(SRC)/%.$(C)=$(OBJ)/$(SRC)/%.o)
 
 SATR_SOURCES = $(shell find $(SRC)/retranslators/$(SATR) -name '*.$(C)')
 SATR_OBJECTS = $(SATR_SOURCES:$(SRC)/retranslators/%.$(C)=$(OBJ)/$(SRC)/retranslators/%.o)
@@ -119,11 +124,12 @@ mkdir:
 	mkdir -p $(OBJ)/$(SRC)/$(EVNT)
 	mkdir -p $(OBJ)/$(SRC)/$(DVCS)
 	mkdir -p $(OBJ)/$(SRC)/$(TREE)
+	mkdir -p $(OBJ)/$(SRC)/$(STCK)
 	mkdir -p $(OBJ)/$(SRC)/retranslators/$(SATR)
 	mkdir -p $(OBJ)/$(SRC)/retranslators/$(SBTR)
 	
 # сборка программы со всеми библиотеками.
-$(MAIN_EXE): $(MAIN_OBJECTS) $(COMP_LIB) $(TERM_LIB) $(CHAR_LIB) $(KEYS_LIB) $(DRAW_LIB) $(EVNT_LIB) $(DVCS_LIB) $(SATR_LIB) $(SBTR_LIB) $(TREE_LIB)
+$(MAIN_EXE): $(MAIN_OBJECTS) $(COMP_LIB) $(TERM_LIB) $(CHAR_LIB) $(KEYS_LIB) $(DRAW_LIB) $(EVNT_LIB) $(DVCS_LIB) $(SATR_LIB) $(SBTR_LIB) $(TREE_LIB) $(STCK_LIB)
 	@echo "\033[1;31m----СБОРКА КОМПЬЮТЕРА----"
 	$(GCC) $(CFLAGS) $(DEBUG) $(CPPFLAGS) -o $@ $< obj/src/libdraw.a -L$(OBJ)/$(SRC) $(LIBS)
 
@@ -156,6 +162,9 @@ $(SBTR_LIB): $(SBTR_OBJECTS)
 	@echo -n "\r\033[0;33m\r"
 	ar rcs $@ $^	
 $(TREE_LIB): $(TREE_OBJECTS)
+	@echo -n "\r\033[0;33m\r"
+	ar rcs $@ $^	
+$(STCK_LIB): $(STCK_OBJECTS)
 	@echo -n "\r\033[0;33m\r"
 	ar rcs $@ $^	
 	
