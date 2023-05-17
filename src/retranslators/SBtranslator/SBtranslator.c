@@ -292,12 +292,12 @@ void calc_rpn(char *rpn_expr) {
     stack_print(calculator);
 
     if ((number = atoi(elements)) != 0) {
-      alloc_memstack(number);
       stack_push(allocPosition, &calculator);
+      alloc_memstack(number);
     } else if (elements[0] >= 'A' && elements[0] <= 'Z') {
       struct bstree *exited_var = bstree_lookup(variables, &elements[0]);
       if (exited_var == NULL)
-        return erropenfile("LET: используется необъявленная переменная");
+        return;  // erropenfile("LET: используется необъявленная переменная");
 
       printf("exited: %s!\n", exited_var->key);
       stack_push(exited_var->value, &calculator);
@@ -316,19 +316,21 @@ void calc_rpn(char *rpn_expr) {
       else if (elements[0] == '-')
         fprintf(tempSA, "%.2d SUB  \t%.2d\n", SBcounter++, b);
       else if (elements[0] == '*')
-        fprintf(tempSA, "%.2d MUL  \t%.2d\n", SBcounter++, ++b);
+        fprintf(tempSA, "%.2d MUL  \t%.2d\n", SBcounter++, b);
       else if (elements[0] == '/')
         fprintf(tempSA, "%.2d DIVIDE\t%.2d\n", SBcounter++, b);
       else
         return erropenfile("LET::неопознанный операнд!");
 
+      if (a <= begin_address) free_memstack(a);
       if (b <= begin_address) free_memstack(b);
-      stack_push(allocPosition, &calculator);
-      fprintf(tempSA, "%.2d STORE\t%.2d\n", SBcounter++, allocPosition);
+      stack_push(allocPosition--, &calculator);
+      fprintf(tempSA, "%.2d STORE\t%.2d\n", SBcounter++, allocPosition + 1);
     }
     printf("cur element:%s.\n", elements);
     elements = strtok(NULL, " ");
   }
+
   printf("RESULT:%d\n", stack_pop(&calculator));
 }
 
