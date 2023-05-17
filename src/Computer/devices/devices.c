@@ -1,11 +1,11 @@
 #include "devices.h"
 
-#include <draw/draw.h>
-#include <events/events.h>
-#include <myBigChars/myBigChars.h>
-#include <myReadKey/myReadKey.h>
-#include <mySimpleComputer/mySimpleComputer.h>
-#include <myTerm/myTerm.h>
+#include <Computer/myBigChars/myBigChars.h>
+#include <Computer/myReadKey/myReadKey.h>
+#include <Computer/mySimpleComputer/mySimpleComputer.h>
+#include <Computer/myTerm/myTerm.h>
+#include <Console/draw/draw.h>
+#include <Console/events/events.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

@@ -2,6 +2,9 @@
 *.a
 *.d
 *.o
-obj
-bin
+objects
+programs
+libraries
 *.sa
+.vscode
+main.exe

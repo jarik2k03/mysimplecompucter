@@ -1,4 +1,4 @@
-#include <mySimpleComputer/mySimpleComputer.h>
+#include <Computer/mySimpleComputer/mySimpleComputer.h>
 
 #include "../thirdparty/ctest.h"
 #define SUCCESS 0

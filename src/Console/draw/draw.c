@@ -1,8 +1,8 @@
 #include "draw.h"
 
+#include <Computer/myBigChars/myBigChars.h>
+#include <Computer/myTerm/myTerm.h>
 #include <malloc.h>
-#include <myBigChars/myBigChars.h>
-#include <myTerm/myTerm.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>

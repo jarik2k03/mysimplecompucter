@@ -1,7 +1,7 @@
 30 PRINT A
 10 INPUT A
 20 INPUT B
-40 LET C =  (A + B * 3) / (1 + 3 * A - 4)
+40 LET C = (A + B * 3) / (1 + 3 * A - 4)
 50 REM INPUT E
 60 REM IF C = 0 GOTO 16
 70 REM GOTO 40

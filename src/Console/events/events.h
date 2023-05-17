@@ -1,6 +1,6 @@
 #pragma once
+#include <Computer/myReadKey/myReadKey.h>
 #include <inttypes.h>
-#include <myReadKey/myReadKey.h>
 
 int decode_and_print(int address);
 void decode_and_display_bc_(int lastaddress, int address);

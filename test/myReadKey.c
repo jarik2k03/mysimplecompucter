@@ -1,4 +1,4 @@
-#include <myReadKey/myReadKey.h>
+#include <Computer/myReadKey/myReadKey.h>
 
 #include "../thirdparty/ctest.h"
 #define SUCCESS 0

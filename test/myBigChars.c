@@ -1,4 +1,4 @@
-#include <myBigChars/myBigChars.h>
+#include <Computer/myBigChars/myBigChars.h>
 
 #include "../thirdparty/ctest.h"
 #define SUCCESS 0

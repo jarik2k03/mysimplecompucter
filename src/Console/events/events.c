@@ -1,13 +1,11 @@
 #include "events.h"
 
-#include <devices/devices.h>
-#include <draw/draw.h>
-#include <myBigChars/myBigChars.h>
-#include <myReadKey/myReadKey.h>
-#include <mySimpleComputer/mySimpleComputer.h>
-#include <myTerm/myTerm.h>
-#include <retranslators/SAtranslator/SAtranslator.h>
-#include <retranslators/SBtranslator/SBtranslator.h>
+#include <Computer/devices/devices.h>
+#include <Computer/myBigChars/myBigChars.h>
+#include <Computer/myReadKey/myReadKey.h>
+#include <Computer/mySimpleComputer/mySimpleComputer.h>
+#include <Computer/myTerm/myTerm.h>
+#include <Console/draw/draw.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -124,13 +122,11 @@ void sat_event() {
   write(0, "Выберите файл для компиляции: ", 56);
   read(0, request, 30);
   request[strlen(request) - 1] = '\0';
-  if (sa_read_program(request) == -1) {
-    input_eraser(50);
-    mainpos_cursor();
-    free(request);
-    return;
-  }
-  sa_write_program(request);
+
+  char input[50] = {"./sbt "};
+  strcat(input, request);
+  system(input);  // запуск транслятора
+
   free(request);
   input_eraser(50);
   mainpos_cursor();
@@ -144,15 +140,10 @@ void sbt_event() {
   read(0, request, 30);
   request[strlen(request) - 1] = '\0';
 
-  if (sb_read_program(request) == -1) {
-    input_eraser(50);
-    mainpos_cursor();
-    free(request);
-    return;
-  }
-  if (sb_write_program(request) != -1 && sa_read_program(request) != -1) {
-    sa_write_program(request);
-  }
+  char input[50] = {"programs/sbt.exe "};
+  strcat(input, request);
+  system(input);  // запуск транслятора
+
   free(request);
   input_eraser(50);
   mainpos_cursor();

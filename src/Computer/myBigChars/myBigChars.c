@@ -1,8 +1,8 @@
 #include "myBigChars.h"
 
+#include <Computer/myTerm/myTerm.h>
 #include <fcntl.h>
 #include <malloc.h>
-#include <myTerm/myTerm.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>

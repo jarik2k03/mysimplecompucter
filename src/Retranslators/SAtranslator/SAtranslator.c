@@ -1,9 +1,9 @@
 #include "SAtranslator.h"
 
-#include <bstree/bstree.h>
-#include <draw/draw.h>
-#include <mySimpleComputer/mySimpleComputer.h>
-#include <myTerm/myTerm.h>
+#include <Computer/mySimpleComputer/mySimpleComputer.h>
+#include <Computer/myTerm/myTerm.h>
+#include <Console/draw/draw.h>
+#include <Retranslators/bstree/bstree.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -93,9 +93,6 @@ int8_t sa_write_to_memory(int16_t *num, char *command, int16_t *operand) {
   if (com->key != "=") sc_commandEncode(com->value, *operand, &value);
 
   tempmem[*num] = value;
-  // mainpos_cursor ();
-  // printf ("%02X%02X ", *command, *operand);
-  // print_cell (*num, value, com->value >> 1, *operand);
 }
 
 int8_t sa_string_check(char *str, int16_t *num, char *command,

@@ -1,9 +1,9 @@
 #include "SBtranslator.h"
 
-#include <bstree/bstree.h>
-#include <draw/draw.h>
-#include <retranslators/SAtranslator/SAtranslator.h>
-#include <stack/stack.h>
+#include <Console/draw/draw.h>
+#include <Retranslators/SAtranslator/SAtranslator.h>
+#include <Retranslators/bstree/bstree.h>
+#include <Retranslators/stack/stack.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -201,9 +201,7 @@ int8_t LET(char *args) {
   expr = strtok(args, "=");
   fprintf(tempSA, "%.2d =\t\t%.2d\t;(Новая переменная заняла свою ячейку)\n",
           alloc(&expr[0]), 127);
-  // printf ("let-arg1:%s\n", expr);
   expr = strtok(NULL, "=");
-  // printf ("let-arg2:%s\n", expr);
   char *formatted_expr = infix_to_prefix(expr);
   calc_rpn(formatted_expr);
 
@@ -297,15 +295,15 @@ void calc_rpn(char *rpn_expr) {
     } else if (elements[0] >= 'A' && elements[0] <= 'Z') {
       struct bstree *exited_var = bstree_lookup(variables, &elements[0]);
       if (exited_var == NULL)
-        return;  // erropenfile("LET: используется необъявленная переменная");
+        return erropenfile("LET: используется необъявленная переменная");
 
       printf("exited: %s!\n", exited_var->key);
       stack_push(exited_var->value, &calculator);
     } else {
-      b = stack_pop(&calculator);  // пред адреса - var
-                                   // очищает константу из памяти
-      a = stack_pop(&calculator);  // пред адреса - var
-                                   // очищает константу из памяти
+      b = stack_pop(&calculator);
+      // очищает константу из памяти
+      a = stack_pop(&calculator);
+      // очищает константу из памяти
       printf("a:%d b:%d\n", a, b);
 
       fprintf(tempSA, "%.2d LOAD \t%.2d\t;(%s)\n", SBcounter++, a,
@@ -330,8 +328,9 @@ void calc_rpn(char *rpn_expr) {
     printf("cur element:%s.\n", elements);
     elements = strtok(NULL, " ");
   }
-
-  printf("RESULT:%d\n", stack_pop(&calculator));
+  fprintf(tempSA, "%.2d STORE\t%.2d\n", SBcounter++,
+          stack_pop(&calculator) + 1);
+  fprintf(tempSA, "%.2d =\t\t00\n", allocPosition++);
 }
 
 void sb_reset() {
