@@ -1,10 +1,10 @@
-typedef struct NODE
-{
-  char data;
+typedef struct NODE {
+  int data;
   struct NODE *next;
 } Node;
 
-void stack_push (char data, Node **top);
-char stack_pop (Node **top);
-char stack_top (Node *top);
-int priority (char c);
+void stack_push(int data, Node **top);
+int stack_pop(Node **top);
+int stack_top(Node *top);
+void stack_print(Node *top);
+int priority(char c);

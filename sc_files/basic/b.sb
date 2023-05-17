@@ -1,8 +1,8 @@
 30 PRINT A
 10 INPUT A
 20 INPUT B
-40 LET C = 128 / ((A - B) * (2 + (A - 4) / 3))
+40 LET C = ( 8 + B * 5) / (1 + 3 * A - 4)
 50 INPUT E
 60 IF C = 0 GOTO 16
-70 GOTO 50
+70 GOTO 40
 80 END

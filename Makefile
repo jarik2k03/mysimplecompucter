@@ -203,6 +203,6 @@ run:
 	./$(MAIN_EXE)
 format:
 	@echo "\033[1;32m----ФОРМАТИРОВАНИЕ ИСХОДНОГО КОДА----"
-	find . -type f -name '*.[ch]' -not -path './thirdparty/*' | xargs clang-format --style GNU -i --verbose
+	find . -type f -name '*.[ch]' -not -path './thirdparty/*' | xargs clang-format --style google -i --verbose
 
 # sc_files/binary/b.o
