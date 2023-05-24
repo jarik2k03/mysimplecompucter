@@ -249,9 +249,12 @@ int8_t IF(char *args) {
   split = strtok(NULL, " ");
   strcpy(argument, split);
 
-  int8_t load_address = calc_rpn(rpn_expr, NULL);
+  fprintf(tempSA, "%.2d =\t\t%.2d\t;(if:Объявление)\n", SBcounter++, 127);
+  fprintf(tempSA, "%.2d STORE\t%.2d\t;(if:Задание значения)\n", SBcounter++,
+          alloc("IF"));
+  int8_t load_address = calc_rpn(rpn_expr, "IF");
   fprintf(tempSA, "%.2d LOAD \t%.2d\t;(Результат в аккумулятор)\n", SBcounter++,
-          load_address);
+          alloc("IF"));
   if (sign == '=')
     fprintf(tempSA, "%.2d JZ   \t%.2d\t;(Прыжок если равно)\n", SBcounter++,
             69);
@@ -341,7 +344,9 @@ int8_t calc_rpn(char *rpn_expr, char *var) {
   char *elements = strtok(rpn_expr, " ");
   int number, a, b;
   const int16_t begin_address = allocPosition;
-  int clear0 = begin_address, clearn = begin_address - 1;
+  int clear0 = begin_address, clearn = begin_address;
+  if (!strcmp(var, "IF")) clearn--;
+
   while (elements != NULL) {
     stack_print(calculator);
 
@@ -349,7 +354,7 @@ int8_t calc_rpn(char *rpn_expr, char *var) {
       stack_push(allocPosition, &calculator);
       alloc_memstack(number);
     } else if (elements[0] >= 'A' && elements[0] <= 'Z') {
-      struct bstree *exited_var = bstree_lookup(variables, &elements[0]);
+      struct bstree *exited_var = bstree_lookup(variables, elements);
       if (exited_var == NULL)
         return erropenfile("LET: используется необъявленная переменная");
 
@@ -358,24 +363,25 @@ int8_t calc_rpn(char *rpn_expr, char *var) {
     } else {
       b = stack_pop(&calculator);
       a = stack_pop(&calculator);
-      // printf("a:%d b:%d\n", a, b);
+      printf("a:%d b:%d\n", a, b);
 
       fprintf(tempSA, "%.2d LOAD \t%.2d\t;(%s)\n", SBcounter++, a,
               ((a > begin_address) ? ("Загружаем переменную")
                                    : ("Загружаем литерал")));
       if (elements[0] == '+')
-        fprintf(tempSA, "%.2d ADD  \t%.2d\n", SBcounter++, b);
+        fprintf(tempSA, "%.2d ADD  \t%.2d\t;(a + b)\n", SBcounter++, b);
       else if (elements[0] == '-')
-        fprintf(tempSA, "%.2d SUB  \t%.2d\n", SBcounter++, b);
+        fprintf(tempSA, "%.2d SUB  \t%.2d\t;(a - b)\n", SBcounter++, b);
       else if (elements[0] == '*')
-        fprintf(tempSA, "%.2d MUL  \t%.2d\n", SBcounter++, b);
+        fprintf(tempSA, "%.2d MUL  \t%.2d\t;(a * b)\n", SBcounter++, b);
       else if (elements[0] == '/')
-        fprintf(tempSA, "%.2d DIVIDE\t%.2d\n", SBcounter++, b);
+        fprintf(tempSA, "%.2d DIVIDE\t%.2d\t;(a / b)\n", SBcounter++, b);
       else
         return erropenfile("LET::неопознанный операнд!");
       if (a <= begin_address) free_memstack(a);
       if (b <= begin_address) free_memstack(b);
-      fprintf(tempSA, "%.2d STORE\t%.2d\n", SBcounter++, allocPosition);
+      fprintf(tempSA, "%.2d STORE\t%.2d\t;(Выгружаем)\n", SBcounter++,
+              allocPosition);
 
       if (b < clear0) clear0 = b;
       stack_push(allocPosition--, &calculator);
@@ -385,12 +391,12 @@ int8_t calc_rpn(char *rpn_expr, char *var) {
   }
   stack_print(calculator);
   stack_pop(&calculator);
-
   fprintf(tempSA, "%.2d STORE\t%.2d\t;(Запись в окончательную переменную)\n",
           SBcounter++, alloc(var));
 
   fprintf(tempSA, "%.2d =\t\t0\t;(Аккумулятор = 0)\n", SBcounter++);
-  while (clear0 < clearn)
+  printf("cl0 :%d; cln :%d\n", clear0, clearn);
+  while (clear0 <= clearn)
     fprintf(tempSA, "%.2d STORE\t%.2d\t;(Очистка стека)\n", SBcounter++,
             clear0++);
   allocPosition++;
@@ -410,7 +416,7 @@ void sb_replace_jumps() {
     if (!strcmp(command, "JUMP")) {
       fseek(tempSA, -3, SEEK_CUR);  // перетирает два числа и '\n'
       replace_address = bstree_lookup(jump_addresses, args);
-      fprintf(tempSA, "%.2d\n", replace_address->value);
+      fprintf(tempSA, "%.2d\n", replace_address->value - 1);
     }
   }
 }
