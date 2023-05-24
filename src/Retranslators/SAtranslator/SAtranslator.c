@@ -164,6 +164,6 @@ int8_t sa_init_commands() {
     fscanf(saved_commands, "%s %hhx", key, &value);
     bstree_add(commands, key, value);
   }
-  // print_tree_as_list(commands);
+  print_tree_as_list(commands);
   return 0;
 }

@@ -34,7 +34,7 @@ int decode_and_print(int address) {
   int command, operand;
   int sign;
   sc_memoryGet(address, &value);
-
+  mt_setfgcolor(white);
   sign = sc_commandDecode(value, &command, &operand);
 
   if (address == current) mt_setbgcolor(green);

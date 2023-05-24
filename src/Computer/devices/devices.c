@@ -124,6 +124,7 @@ void READ(int operand) {
 
   print_ccell(operand, buffer, green);
   hist_cursor(historyCounter);
+  mt_setfgcolor(blue);
   printf("READ:: записано %d в ячейку: %d.\n", buffer, operand);
   historyCounter++;
 }
@@ -132,7 +133,10 @@ void WRITE(int operand) {
   int value;
   sc_memoryGet(operand, &value);
 
+  mt_gotoXY(24, 42);
+  printf("%d[0x%x]", value, operand);
   hist_cursor(historyCounter);
+  mt_setfgcolor(magenta);
   printf("WRITE:: значение %d ячейки = %d.\n", operand, value);
   historyCounter++;
 }
@@ -145,6 +149,7 @@ void LOAD(int operand) {
   print_accumulator(accumulator);
 
   hist_cursor(historyCounter);
+  mt_setfgcolor(yellow);
   printf("LOAD:: %d значение добавлено в аккумулятор из %d ячейки.\n", value,
          operand);
   historyCounter++;
@@ -153,12 +158,16 @@ void STORE(int operand) {
   sc_memorySet(operand, accumulator);
 
   uint8_t color;
-  if (accumulator == 0) color = white;
-  else if (accumulator == 0x7f) color = red;
-  else color = yellow;
+  if (accumulator == 0)
+    color = white;
+  else if (accumulator == 0x7f)
+    color = red;
+  else
+    color = yellow;
 
   print_ccell(operand, accumulator, color);
   hist_cursor(historyCounter);
+  mt_setfgcolor(yellow);
   printf("STORE:: %d значение выгружено из аккумулятора в %d ячейку.\n",
          accumulator, operand);
   historyCounter++;
@@ -171,6 +180,7 @@ void JUMP(int operand) {
   decode_and_print(counter);
   print_counter();
   hist_cursor(historyCounter);
+  mt_setfgcolor(green);
   printf("JUMP:: совершен переход в ячейку %d.\n", operand);
   historyCounter++;
 }
@@ -183,6 +193,7 @@ void JNEG(int operand) {
   decode_and_print(counter);
   print_counter();
   hist_cursor(historyCounter);
+  mt_setfgcolor(green);
   printf("JNEG:: совершен переход в ячейку %d.\n", operand);
   historyCounter++;
 }
@@ -195,6 +206,7 @@ void JZ(int operand) {
   decode_and_print(counter);
   print_counter();
   hist_cursor(historyCounter);
+  mt_setfgcolor(green);
   printf("JZ:: совершен переход в ячейку %d.\n", operand);
   historyCounter++;
 }
@@ -204,6 +216,7 @@ void HALT(int operand) {
   register_event(ticks);
 
   hist_cursor(historyCounter);
+  mt_setfgcolor(white);
   printf("HALT:: программа завершилась с кодом %d.\n", operand);
   historyCounter = 0;
 }
@@ -229,7 +242,7 @@ void XOR(int operand) {
   print_accumulator(accumulator);
 
   hist_cursor(historyCounter);
-  printf("OR:: делаем ИСКЛЮЧАЮЩЕЕ ИЛИ аккумулятора (%d) на число = %d.\n",
+  printf("XOR:: делаем ИСКЛЮЧАЮЩЕЕ ИЛИ аккумулятора (%d) на число = %d.\n",
          accumulator, value);
   historyCounter++;
 }
@@ -240,7 +253,19 @@ void VAR(int operand) {
   print_accumulator(accumulator);
 
   hist_cursor(historyCounter);
+  mt_setfgcolor(white);
   printf("=:: добавляем в аккумулятор число = %d.\n", operand);
+  historyCounter++;
+}
+
+void NOT(int operand) {
+  accumulator = -accumulator;
+
+  print_accumulator(accumulator);
+
+  hist_cursor(historyCounter);
+  mt_setfgcolor(white);
+  printf("NOT:: инвертировано слово = %d.\n", accumulator);
   historyCounter++;
 }
 // sc_files/binary/b.o

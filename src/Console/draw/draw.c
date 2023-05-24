@@ -153,14 +153,15 @@ void print_ccell(int16_t address, int32_t value, uint8_t color) {
   return;
 }
 
-void erropenfile(char *message) {
+int erropenfile(char *message) {
   input_cursor();
   mt_setbgcolor(red);
-  write(0, message, 60);
+  write(2, message, 60);
   mt_setbgcolor(darkgrey);
   sleep(1);
   input_cursor();
   input_eraser(strlen(message));
+  return -1;
 }
 
 void mainpos_cursor() { mt_gotoXY(24, 2); }

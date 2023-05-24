@@ -14,3 +14,4 @@ void HALT(int operand);
 void OR(int operand);
 void XOR(int operand);
 void VAR(int operand);
+void NOT(int operand);

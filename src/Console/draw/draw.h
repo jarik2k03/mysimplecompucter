@@ -17,7 +17,7 @@ void print_interface();
 void print_cell(int16_t address, int32_t value, int16_t command,
                 int16_t operand);
 void print_ccell(int16_t address, int32_t value, uint8_t color);
-void erropenfile(char *message);
+int erropenfile(char *message);
 
 void hist_cursor(int8_t hcounter);
 void mainpos_cursor();

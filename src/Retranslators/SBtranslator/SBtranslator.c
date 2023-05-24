@@ -78,6 +78,7 @@ static struct bstree *jump_addresses = NULL;
 static struct bstree *variables = NULL;
 
 int16_t SBcounter = 0;
+int8_t tempSBcounter;
 FILE *tempSA = NULL;
 
 int16_t allocPosition = 99;
@@ -113,7 +114,7 @@ int8_t sb_write_program(char *in) {
   strcat(path2, in);
   path2[strlen(path2) - 1] = 'a';
 
-  if (tempSA == NULL) tempSA = fopen(path2, "w");
+  if (tempSA == NULL) tempSA = fopen(path2, "w+");
 
   if (variables == NULL) variables = bstree_create("ROOT", 0);
 
@@ -136,6 +137,7 @@ int8_t sb_write_program(char *in) {
     // fprintf (debug, "%hd %s %s\n", num, command, args);
     sb_write(num, command, args);
   }
+  sb_replace_jumps();
   print_tree_as_list(variables);
   print_tree_as_list(jump_addresses);
   fclose(debug);
@@ -154,9 +156,8 @@ int8_t alloc(char *var) {
 }
 
 int8_t alloc_memstack(int num) {
-  fprintf(tempSA, "%.2d =\t\t%.2d\t;(Добавление константы)\n", SBcounter++,
-          num);
-  fprintf(tempSA, "%.2d STORE\t%.2d\t;(Загрузка константы)\n", SBcounter++,
+  fprintf(tempSA, "%.2d =\t\t%.2d\t;(Добавление литерала)\n", SBcounter++, num);
+  fprintf(tempSA, "%.2d STORE\t%.2d\t;(Загрузка литерала)\n", SBcounter++,
           allocPosition--);
 }
 
@@ -197,9 +198,6 @@ int8_t PRINT(char *args) {
 }
 
 int8_t LET(char *args) {
-  // char arr[120];
-  // strcpy (arr, args);
-
   char *expr;
   expr = strtok(args, "=");
 
@@ -212,7 +210,6 @@ int8_t LET(char *args) {
     fprintf(tempSA, "%.2d STORE\t%.2d\t;(let:Задание значения)\n", SBcounter++,
             alloc(v));
   }
-
   expr = strtok(NULL, "=");
   char *formatted_expr = infix_to_prefix(expr);
   calc_rpn(formatted_expr, v);
@@ -220,21 +217,70 @@ int8_t LET(char *args) {
   return 0;
 }
 
-int8_t IF(char *args) { return 0; }
+int8_t IF(char *args) {
+  char *split = strtok(args, "THEN");  // условие
+
+  char sign;
+  char expr[64] = " ";
+  uint8_t next = 0;
+  int8_t i = 0;
+
+  expr[next++] = '(';  // выделяем левое выражение скобками
+  for (; split[i] < '<' || split[i] > '>'; i++) expr[next++] = split[i];
+  expr[next++] = ')';  // выделяем левое выражение скобками
+  expr[next++] = '-';  // минус между выражениями
+  expr[next++] = '(';  // выделяем правое выражение скобками
+  sign = split[i++];  // знак
+  for (; split[i] != '\0'; i++) expr[next++] = split[i];
+  expr[next++] = ')';  // выделяем правое выражение скобками
+  expr[next++] = '\0';
+
+  printf("infix expr = %s; sign : %c;\n", expr, sign);
+  char *rpn_expr = infix_to_prefix(expr);
+  printf("prefix expr = %s; sign : %c;\n", rpn_expr, sign);
+
+  split = strtok(NULL, " ");
+  printf("then : %s\n", split);
+
+  char argument[256], command[8];
+  if (strcmp(split, "HEN") != 0) return erropenfile("Ожидалось THEN");
+  split = strtok(NULL, " ");
+  strcpy(command, split);
+  split = strtok(NULL, " ");
+  strcpy(argument, split);
+
+  int8_t load_address = calc_rpn(rpn_expr, NULL);
+  fprintf(tempSA, "%.2d LOAD \t%.2d\t;(Результат в аккумулятор)\n", SBcounter++,
+          load_address);
+  if (sign == '=')
+    fprintf(tempSA, "%.2d JZ   \t%.2d\t;(Прыжок если равно)\n", SBcounter++,
+            69);
+  else if (sign == '<')
+    fprintf(tempSA, "%.2d JNEG \t%.2d\t;(Прыжок если меньше)\n", SBcounter++,
+            69);
+  else if (sign == '>') {
+    fprintf(tempSA, "%.2d NOT  \t%.2d\t;(Сначала инверсия)\n", SBcounter++,
+            load_address);
+    fprintf(tempSA, "%.2d JNEG \t%.2d\t;(Прыжок если больше)\n", SBcounter++,
+            69);
+  }
+  tempSBcounter = SBcounter;
+  SBcounter = 70;
+  printf("command: %s\n", command);
+  printf("args: %s\n", argument);
+
+  sb_write("IF", command, argument);
+  SBcounter = tempSBcounter;
+  return 0;
+}
 
 int8_t GOTO(char *args) {
-  struct bstree *cell = bstree_lookup(jump_addresses, args);
-  if (cell == NULL) {
-    erropenfile("GOTO:: попытка перемещения в несуществующую инструкцию.\n");
-    return -1;
-  }
-  fprintf(tempSA, "%.2i JUMP \t%.2d\n", SBcounter, cell->value);
+  fprintf(tempSA, "%.2i JUMP \t%s\n", SBcounter++, args);
   return 0;
 }
 
 int8_t END(char *args) {
-  fprintf(tempSA, "%.2i HALT \t%d\n", SBcounter, atoi(args));
-  SBcounter++;
+  fprintf(tempSA, "%.2i HALT \t%d\n", SBcounter++, atoi(args));
 }
 
 char *infix_to_prefix(char *expr) {
@@ -289,14 +335,13 @@ char *infix_to_prefix(char *expr) {
   return rpn_expr;
 }
 
-void calc_rpn(char *rpn_expr, char *var) {
-  printf("%s\n", rpn_expr);
-
+int8_t calc_rpn(char *rpn_expr, char *var) {
+  // printf("%s\n", rpn_expr);
   Node *calculator = NULL;
   char *elements = strtok(rpn_expr, " ");
   int number, a, b;
   const int16_t begin_address = allocPosition;
-  int clear0 = begin_address;
+  int clear0 = begin_address, clearn = begin_address - 1;
   while (elements != NULL) {
     stack_print(calculator);
 
@@ -317,7 +362,7 @@ void calc_rpn(char *rpn_expr, char *var) {
 
       fprintf(tempSA, "%.2d LOAD \t%.2d\t;(%s)\n", SBcounter++, a,
               ((a > begin_address) ? ("Загружаем переменную")
-                                   : ("Загружаем константу")));
+                                   : ("Загружаем литерал")));
       if (elements[0] == '+')
         fprintf(tempSA, "%.2d ADD  \t%.2d\n", SBcounter++, b);
       else if (elements[0] == '-')
@@ -340,13 +385,34 @@ void calc_rpn(char *rpn_expr, char *var) {
   }
   stack_print(calculator);
   stack_pop(&calculator);
+
   fprintf(tempSA, "%.2d STORE\t%.2d\t;(Запись в окончательную переменную)\n",
           SBcounter++, alloc(var));
 
   fprintf(tempSA, "%.2d =\t\t0\t;(Аккумулятор = 0)\n", SBcounter++);
-  while (clear0 <= begin_address)
-    fprintf(tempSA, "%.2d STORE\t%.2d\n", SBcounter++, clear0++);
+  while (clear0 < clearn)
+    fprintf(tempSA, "%.2d STORE\t%.2d\t;(Очистка стека)\n", SBcounter++,
+            clear0++);
   allocPosition++;
+  return clearn;
+}
+
+void sb_replace_jumps() {
+  int num;
+  char command[8], args[64];
+  char line[128];
+  struct bstree *replace_address = NULL;
+  fseek(tempSA, 0, SEEK_SET);
+  while (!feof(tempSA)) {
+    fgets(line, 128, tempSA);
+
+    sscanf(line, "%d %s %[^\n]s", &num, command, args);
+    if (!strcmp(command, "JUMP")) {
+      fseek(tempSA, -3, SEEK_CUR);  // перетирает два числа и '\n'
+      replace_address = bstree_lookup(jump_addresses, args);
+      fprintf(tempSA, "%.2d\n", replace_address->value);
+    }
+  }
 }
 
 void sb_reset() {
