@@ -11,11 +11,12 @@ void print_regCell(int address, uint8_t value);
 void print_accumulator(int32_t accumulator);
 void print_counter();
 void print_operation(int sign, int command, int operand);
+void print_operation_(int sign, int value);
 void print_display(int value, int command, int operand);
 void print_interface();
 void print_cell(int16_t address, int32_t value, int16_t command,
                 int16_t operand);
-void print_ccell(int16_t address, int32_t value);
+void print_ccell(int16_t address, int32_t value, uint8_t color);
 void erropenfile(char *message);
 
 void hist_cursor(int8_t hcounter);

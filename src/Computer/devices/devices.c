@@ -24,30 +24,30 @@ void ALU(int command, int operand) {
 
   hist_cursor(historyCounter);
 
-  if (command == 32 && value == 0) {
+  if (command == 0x32 && value == 0) {
     sc_regSet(zero, 1);
     register_event(zero);
     return;
   }
 
   switch (command) {
-    case 30:  // ADD
-      printf("ADD:: добавляем в аккумулятор = (%X) число = %X.\n", accumulator,
+    case 0x30:  // ADD
+      printf("ADD:: добавляем в аккумулятор = (%d) число = %d.\n", accumulator,
              value);
       accumulator += value;
       break;
-    case 31:  // SUB
-      printf("SUB:: вычитаем из аккумулятора (%X) число = %X.\n", accumulator,
+    case 0x31:  // SUB
+      printf("SUB:: вычитаем из аккумулятора (%d) число = %d.\n", accumulator,
              value);
       accumulator -= value;
       break;
-    case 32:  // DIVIDE
-      printf("DIVIDE:: делим аккумулятор (%X) на число = %X.\n", accumulator,
+    case 0x32:  // DIVIDE
+      printf("DIVIDE:: делим аккумулятор (%d) на число = %d.\n", accumulator,
              value);
       accumulator /= value;
       break;
-    case 33:  // MUL
-      printf("MUL:: умножаем аккумулятор (%X) на число = %X.\n", accumulator,
+    case 0x33:  // MUL
+      printf("MUL:: умножаем аккумулятор (%d) на число = %d.\n", accumulator,
              value);
       accumulator *= value;
       break;
@@ -74,27 +74,29 @@ void CU() {
   }
 
   if (sc_commandDecode(value, &command, &operand) == 0) {
-    if (command >= 30 && command <= 33)
+    if (command >= 0x30 && command <= 0x33)
       ALU(command, operand);
-    else if (command == 10)
+    else if (command == 0x0)
+      VAR(operand);
+    else if (command == 0x10)
       READ(operand);
-    else if (command == 11)
+    else if (command == 0x11)
       WRITE(operand);
-    else if (command == 20)
+    else if (command == 0x20)
       LOAD(operand);
-    else if (command == 21)
+    else if (command == 0x21)
       STORE(operand);
-    else if (command == 40)
+    else if (command == 0x40)
       JUMP(operand);
-    else if (command == 41)
+    else if (command == 0x41)
       JNEG(operand);
-    else if (command == 42)
+    else if (command == 0x42)
       JZ(operand);
-    else if (command == 43)
+    else if (command == 0x43)
       HALT(operand);
-    else if (command == 53)
+    else if (command == 0x53)
       OR(operand);
-    else if (command == 54)
+    else if (command == 0x54)
       XOR(operand);
     counter++;
     move_event(&next);
@@ -120,9 +122,9 @@ void READ(int operand) {
   if (buffer < 0 && buffer > 0x7fff) return;
   sc_memorySet(operand, buffer);
 
-  print_ccell(operand, buffer);
+  print_ccell(operand, buffer, green);
   hist_cursor(historyCounter);
-  printf("READ:: записано %X в ячейку: %d.\n", buffer, operand);
+  printf("READ:: записано %d в ячейку: %d.\n", buffer, operand);
   historyCounter++;
 }
 
@@ -131,7 +133,7 @@ void WRITE(int operand) {
   sc_memoryGet(operand, &value);
 
   hist_cursor(historyCounter);
-  printf("WRITE:: значение %d ячейки = %X.\n", operand, value);
+  printf("WRITE:: значение %d ячейки = %d.\n", operand, value);
   historyCounter++;
 }
 
@@ -143,16 +145,21 @@ void LOAD(int operand) {
   print_accumulator(accumulator);
 
   hist_cursor(historyCounter);
-  printf("LOAD:: %X значение добавлено в аккумулятор из %d ячейки.\n", value,
+  printf("LOAD:: %d значение добавлено в аккумулятор из %d ячейки.\n", value,
          operand);
   historyCounter++;
 }
 void STORE(int operand) {
   sc_memorySet(operand, accumulator);
 
-  print_ccell(operand, accumulator);
+  uint8_t color;
+  if (accumulator == 0) color = white;
+  else if (accumulator == 0x7f) color = red;
+  else color = yellow;
+
+  print_ccell(operand, accumulator, color);
   hist_cursor(historyCounter);
-  printf("STORE:: %X значение выгружено из аккумулятора в %d ячейку.\n",
+  printf("STORE:: %d значение выгружено из аккумулятора в %d ячейку.\n",
          accumulator, operand);
   historyCounter++;
 }
@@ -209,7 +216,7 @@ void OR(int operand) {
   print_accumulator(accumulator);
 
   hist_cursor(historyCounter);
-  printf("OR:: делаем побитовое ИЛИ аккумулятора (%X) на число = %X.\n",
+  printf("OR:: делаем побитовое ИЛИ аккумулятора (%d) на число = %X.\n",
          accumulator, value);
   historyCounter++;
 }
@@ -222,8 +229,18 @@ void XOR(int operand) {
   print_accumulator(accumulator);
 
   hist_cursor(historyCounter);
-  printf("OR:: делаем ИСКЛЮЧАЮЩЕЕ ИЛИ аккумулятора (%X) на число = %X.\n",
+  printf("OR:: делаем ИСКЛЮЧАЮЩЕЕ ИЛИ аккумулятора (%d) на число = %d.\n",
          accumulator, value);
+  historyCounter++;
+}
+
+void VAR(int operand) {
+  accumulator = operand;
+
+  print_accumulator(accumulator);
+
+  hist_cursor(historyCounter);
+  printf("=:: добавляем в аккумулятор число = %d.\n", operand);
   historyCounter++;
 }
 // sc_files/binary/b.o

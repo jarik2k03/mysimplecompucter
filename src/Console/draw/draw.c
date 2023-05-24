@@ -89,6 +89,11 @@ void print_operation(int sign, int command, int operand) {
   printf("%c%02X : %02X", sign, command, operand);
 }
 
+void print_operation_(int sign, int value) {
+  mt_gotoXY(8, 74);
+  printf("%c%04X", sign, value);
+}
+
 void print_display(int value, int command, int operand) {
   int x = 2;
   display_bigchar(value, x, 0);
@@ -131,7 +136,7 @@ void print_cell(int16_t address, int32_t value, int16_t command,
   return;
 }
 
-void print_ccell(int16_t address, int32_t value) {
+void print_ccell(int16_t address, int32_t value, uint8_t color) {
   int row, col;
   char *buf = malloc(7 * sizeof(char));
 
@@ -141,8 +146,9 @@ void print_ccell(int16_t address, int32_t value) {
   snprintf(buf, 7, "%c%04X\n", (value & 0x4000) ? '-' : '+', value);
 
   mt_gotoXY(2 + row, 2 + col * 6);
+  mt_setfgcolor(color);
   write(1, buf, 5);
-
+  mt_setfgcolor(white);
   free(buf);
   return;
 }

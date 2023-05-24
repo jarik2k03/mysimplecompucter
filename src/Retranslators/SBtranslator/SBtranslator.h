@@ -14,7 +14,7 @@ int8_t sb_write_program(char *in);
 int8_t alloc(char *var);
 int8_t alloc_memstack(int num);
 int8_t free_memstack();
-void calc_rpn(char *rpn_expr);
+void calc_rpn(char *rpn_expr, char *var);
 char *infix_to_prefix(char *expr);
 
 int8_t INPUT(char *args);

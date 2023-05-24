@@ -112,7 +112,7 @@ $(OBJ)/%.o: %.c
 
 # make (Первая зависимость - выполняет всё.)
 .PHONY: $(MAIN) 
-$(MAIN): $(MD) $(MAIN_EXE) tests $(SAT) $(SBT)
+$(MAIN): $(MD) $(MAIN_EXE) $(SAT) $(SBT) $(MAIN_EXE) tests 
 
 # make all - форматирование, компиляция и запуск в одной команде!
 .PHONY: all

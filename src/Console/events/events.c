@@ -36,11 +36,11 @@ int decode_and_print(int address) {
   sc_memoryGet(address, &value);
 
   sign = sc_commandDecode(value, &command, &operand);
-  command >>= 1;
 
   if (address == current) mt_setbgcolor(green);
 
   print_cell(address, value, command, operand);
+
   mt_setbgcolor(darkgrey);
   return sign;
 }
@@ -52,7 +52,6 @@ void decode_and_display_bc_(int lastaddress, int address) {
   sc_memoryGet(lastaddress, &lastvalue);
   if (lastvalue == value) return;
   sc_commandDecode(value, &command, &operand);
-  command >>= 1;
   print_display(value, command, operand);
 }
 
@@ -69,11 +68,14 @@ void decode_and_display_bc(int address) {
 void operation_event(int address) {
   int value;
   int command, operand;
-  sc_memoryGet(address, &value);
-  sc_commandDecode(value, &command, &operand);
-  command >>= 1;
   char sign = (value & 0x4000) ? '-' : '+';
-  print_operation(sign, command, operand);
+  sc_memoryGet(address, &value);
+  if (value & 0x8000)
+    print_operation_(sign, value);
+  else {
+    sc_commandDecode(value, &command, &operand);
+    print_operation(sign, command, operand);
+  }
 }
 
 void register_event(int address) {

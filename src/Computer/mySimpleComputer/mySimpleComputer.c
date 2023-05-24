@@ -12,8 +12,10 @@ static int *memory = NULL;
 static int registr;  // переменная, хранящая флаги
 
 static int commandSet[] = {
-    10, 11, 20, 21, 30, 31, 32, 33, 40, 41, 42, 43, 51, 52, 53, 54, 55, 56, 57,
-    58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76,
+    0x10, 0x11, 0x20, 0x21, 0x30, 0x31, 0x32, 0x33, 0x40, 0x41,
+    0x42, 0x43, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58,
+    0x59, 0x60, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68,
+    0x69, 0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76,
 };
 
 int sc_init() {
@@ -108,9 +110,6 @@ void sc_outputMemory() {
 }
 
 int sc_commandEncode(int command, int operand, int *value) {
-  int length = sizeof(commandSet) / sizeof(commandSet[0]);
-  int *found = bsearch(&command, commandSet, length, sizeof(int), compare);
-  if (found == NULL) return -1;
   if (value == NULL || operand > MASK || command > MASK) return -1;
 
   *value = NULLBIT;
@@ -123,8 +122,7 @@ int sc_commandEncode(int command, int operand, int *value) {
 int sc_commandDecode(int value, int *command, int *operand) {
   if (command == NULL || operand == NULL) return -1;
   int sign = value & 0x4000;
-  if (sign == 1) sc_regSet(unknown, 1);
-
+  if (sign) sc_regSet(unknown, 1);
   *operand = *command = NULLBIT;
 
   *operand = value & MASK;

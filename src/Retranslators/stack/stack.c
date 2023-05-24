@@ -1,6 +1,7 @@
 #include "stack.h"
 
 #include <malloc.h>
+#include <unistd.h>
 
 void stack_push(int data, Node **top) {
   Node *tmp = (Node *)malloc(sizeof(Node));
@@ -34,6 +35,7 @@ void stack_print(Node *top) {
     printf("\n");
     return;
   }
+
   printf("[%d] ", top->data);
   stack_print(top->next);
 }

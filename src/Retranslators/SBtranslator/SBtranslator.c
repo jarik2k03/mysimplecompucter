@@ -80,7 +80,7 @@ static struct bstree *variables = NULL;
 int16_t SBcounter = 0;
 FILE *tempSA = NULL;
 
-int16_t allocPosition = 98;
+int16_t allocPosition = 99;
 
 FILE *debug = NULL;
 
@@ -154,14 +154,16 @@ int8_t alloc(char *var) {
 }
 
 int8_t alloc_memstack(int num) {
-  fprintf(tempSA, "%.2d =\t\t%.2d\t;(Инициализация быстрой переменной)\n",
-          allocPosition, num);
-  allocPosition--;
+  fprintf(tempSA, "%.2d =\t\t%.2d\t;(Добавление константы)\n", SBcounter++,
+          num);
+  fprintf(tempSA, "%.2d STORE\t%.2d\t;(Загрузка константы)\n", SBcounter++,
+          allocPosition--);
 }
 
 int8_t free_memstack() {
-  fprintf(tempSA, "%.2d =\t\t00\t;(Очистка быстрой переменной)\n",
-          allocPosition);
+  // fprintf(tempSA, "%.2d =\t\t%.2d\t;(CLEAR)\n", SBcounter++, 0);
+  // fprintf(tempSA, "%.2d STORE\t%.2d\t;(CLEAR)\n", SBcounter++,
+  //        allocPosition - 1);
   ++allocPosition;
 }
 
@@ -197,13 +199,23 @@ int8_t PRINT(char *args) {
 int8_t LET(char *args) {
   // char arr[120];
   // strcpy (arr, args);
+
   char *expr;
   expr = strtok(args, "=");
-  fprintf(tempSA, "%.2d =\t\t%.2d\t;(Новая переменная заняла свою ячейку)\n",
-          alloc(&expr[0]), 127);
+
+  char v[2] = {expr[0], '\0'};
+
+  struct bstree *exited = bstree_lookup(variables, v);
+
+  if (!exited) {
+    fprintf(tempSA, "%.2d =\t\t%.2d\t;(let:Объявление)\n", SBcounter++, 127);
+    fprintf(tempSA, "%.2d STORE\t%.2d\t;(let:Задание значения)\n", SBcounter++,
+            alloc(v));
+  }
+
   expr = strtok(NULL, "=");
   char *formatted_expr = infix_to_prefix(expr);
-  calc_rpn(formatted_expr);
+  calc_rpn(formatted_expr, v);
 
   return 0;
 }
@@ -277,15 +289,14 @@ char *infix_to_prefix(char *expr) {
   return rpn_expr;
 }
 
-void calc_rpn(char *rpn_expr) {
-  // for (int8_t i = 0; i < 120; i++)
+void calc_rpn(char *rpn_expr, char *var) {
   printf("%s\n", rpn_expr);
 
   Node *calculator = NULL;
   char *elements = strtok(rpn_expr, " ");
   int number, a, b;
-  int16_t begin_address = allocPosition;
-
+  const int16_t begin_address = allocPosition;
+  int clear0 = begin_address;
   while (elements != NULL) {
     stack_print(calculator);
 
@@ -301,10 +312,8 @@ void calc_rpn(char *rpn_expr) {
       stack_push(exited_var->value, &calculator);
     } else {
       b = stack_pop(&calculator);
-      // очищает константу из памяти
       a = stack_pop(&calculator);
-      // очищает константу из памяти
-      printf("a:%d b:%d\n", a, b);
+      // printf("a:%d b:%d\n", a, b);
 
       fprintf(tempSA, "%.2d LOAD \t%.2d\t;(%s)\n", SBcounter++, a,
               ((a > begin_address) ? ("Загружаем переменную")
@@ -319,18 +328,25 @@ void calc_rpn(char *rpn_expr) {
         fprintf(tempSA, "%.2d DIVIDE\t%.2d\n", SBcounter++, b);
       else
         return erropenfile("LET::неопознанный операнд!");
-
       if (a <= begin_address) free_memstack(a);
       if (b <= begin_address) free_memstack(b);
+      fprintf(tempSA, "%.2d STORE\t%.2d\n", SBcounter++, allocPosition);
+
+      if (b < clear0) clear0 = b;
       stack_push(allocPosition--, &calculator);
-      fprintf(tempSA, "%.2d STORE\t%.2d\n", SBcounter++, allocPosition + 1);
     }
-    printf("cur element:%s.\n", elements);
+    // printf("cur element:%s.\n", elements);
     elements = strtok(NULL, " ");
   }
-  fprintf(tempSA, "%.2d STORE\t%.2d\n", SBcounter++,
-          stack_pop(&calculator) + 1);
-  fprintf(tempSA, "%.2d =\t\t00\n", allocPosition++);
+  stack_print(calculator);
+  stack_pop(&calculator);
+  fprintf(tempSA, "%.2d STORE\t%.2d\t;(Запись в окончательную переменную)\n",
+          SBcounter++, alloc(var));
+
+  fprintf(tempSA, "%.2d =\t\t0\t;(Аккумулятор = 0)\n", SBcounter++);
+  while (clear0 <= begin_address)
+    fprintf(tempSA, "%.2d STORE\t%.2d\n", SBcounter++, clear0++);
+  allocPosition++;
 }
 
 void sb_reset() {

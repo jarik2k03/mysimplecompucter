@@ -75,7 +75,7 @@ int8_t sa_save_memory(char *in) {
   char o[] = ".o";
   for (uint8_t i = 0; i < 3; i++) in[ext + i] = o[i];
 
-  char path[] = "sc_files/binary/";
+  char path[50] = "sc_files/binary/";
   strcat(path, in);
   FILE *obj = fopen(path, "wb");
   fwrite(tempmem, sizeof(int), 100, obj);
@@ -89,8 +89,7 @@ int8_t sa_write_to_memory(int16_t *num, char *command, int16_t *operand) {
 
   struct bstree *com = bstree_lookup(commands, command);
 
-  value = *operand;
-  if (com->key != "=") sc_commandEncode(com->value, *operand, &value);
+  sc_commandEncode(com->value, *operand, &value);
 
   tempmem[*num] = value;
 }
@@ -145,7 +144,7 @@ int8_t sa_cell_check(int16_t num) {
 int8_t sa_operand_check(int16_t operand, char *command) {
   struct bstree *lookup = bstree_lookup(commands, command);
   if (operand > 127 && lookup->value != 0) {
-    erropenfile("Ошибка - переполнение операнда.");
+    // erropenfile("Ошибка - переполнение операнда.");
     return -1;
   }
   return 0;
@@ -158,13 +157,13 @@ int8_t sa_init_commands() {
     erropenfile("Не удалось найти словарь!");
     return -1;
   }
-
   char key[8];
   uint8_t value;
   commands = bstree_create("=", 0);
   while (!feof(saved_commands)) {
-    fscanf(saved_commands, "%s %hhd", key, &value);
+    fscanf(saved_commands, "%s %hhx", key, &value);
     bstree_add(commands, key, value);
   }
+  // print_tree_as_list(commands);
   return 0;
 }
